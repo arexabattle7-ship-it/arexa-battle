@@ -1,0 +1,184 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AREXA BATTLE Player</title><style>
+*{box-sizing:border-box}body{margin:0;background:#080512;color:#fff;font-family:Arial,sans-serif}.wrap{max-width:430px;min-height:100vh;margin:auto;background:linear-gradient(180deg,#100821,#09051b);padding:0 0 78px;overflow:hidden}
+.top{position:sticky;top:0;z-index:10;background:#100821f5;border-bottom:1px solid #69319a;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-weight:900;font-size:20px;letter-spacing:1px}.brand span{color:#ffd52e}.sub{font-size:10px;color:#b9a9d0;letter-spacing:1px;margin-top:3px}.top .tag{border:1px solid #b98b27;border-radius:20px;padding:8px 10px;color:#ffd52e;background:#302044;font-size:11px;white-space:nowrap}
+#app{padding:14px}h1{font-size:25px;margin:14px 0 8px}h2{font-size:18px;margin:16px 0 10px}h3{margin:8px 0;font-size:16px}p,.muted{color:#c4b6d8;line-height:1.5}.small{font-size:12px}.page{padding-bottom:12px}
+.card{border:1px solid #9a39d4;border-radius:16px;background:linear-gradient(145deg,#21113d,#10091f);padding:12px;margin:12px 0;box-shadow:0 0 15px #8626ca25}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mode-card,.slot-card{position:relative;overflow:hidden;border:1px solid #9840d0;border-radius:14px;background:linear-gradient(135deg,#562184,#170d32 48%,#8e2d77);min-height:130px;padding:0;color:white;text-align:left;cursor:pointer;box-shadow:0 0 12px #8d30c22a}.mode-art{height:130px;background:radial-gradient(circle at 70% 25%,#b44cff88,transparent 35%),linear-gradient(135deg,#562184,#170d32 48%,#8e2d77)}.mode-card:after,.slot-card:after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,#080412ef)}.mode-card strong,.slot-card strong{position:absolute;z-index:1;bottom:12px;left:12px;right:8px;font-size:15px}.mode-card small,.slot-card small{display:block;color:#d9c7ec;font-size:10px;font-weight:400;margin-top:5px}
+.hero{height:142px;border:1px solid #a333ff;border-radius:17px;padding:18px;display:flex;flex-direction:column;justify-content:end;background:linear-gradient(110deg,#1b083b,#34104b 65%,#5b1a69);margin:4px 0 16px}.hero strong{font-size:24px}.hero p{margin:5px 0}.profileline{display:flex;align-items:center;gap:12px}.avatar{width:44px;height:44px;border-radius:50%;background:#301747;border:1px solid #a333ff;display:grid;place-items:center;font-size:22px}
+.btn{border:0;border-radius:10px;padding:13px 15px;background:linear-gradient(90deg,#ffe34b,#ffb800);color:#211500;font-size:14px;font-weight:900;cursor:pointer;margin:4px 4px 4px 0}.btn.alt{border:1px solid #8f45bd;background:#24133e;color:white}.btn.good{background:#15803d;color:white}.btn.warn{background:#9a3412;color:white}.btn:disabled{opacity:.45;cursor:not-allowed}.back{border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer}.crumb{font-size:11px;color:#cbb9df;margin:12px 0 8px}.crumb b{color:#ffd52e}.hint{font-size:12px;color:#bcaed1;margin-top:-4px;margin-bottom:12px}
+.cover{height:145px;border-radius:11px;overflow:hidden;position:relative;margin-bottom:12px;background:linear-gradient(135deg,#562184,#170d32 48%,#8e2d77)}.cover:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#090414d9,transparent 70%)}.cover b{position:absolute;z-index:1;bottom:12px;left:12px;font-size:21px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.meta div{background:#281743;border-radius:9px;padding:10px 4px;text-align:center;color:#c9bbdc;font-size:10px}.meta b{display:block;color:#ffdc45;font-size:13px;margin-top:5px}.tag{display:inline-block;color:#ffdc45;border:1px solid #9b7628;border-radius:18px;padding:4px 8px;font-size:10px}.item{padding:12px 0;border-bottom:1px solid #49315f}.item:last-child{border:0}.stat{font-size:22px;font-weight:900;color:#ffdc45}.notice{border:1px solid #665327;background:#241e11;color:#f7d98b;padding:12px;border-radius:12px;font-size:12px;line-height:1.5;margin-top:14px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(6,1fr);background:#100821f5;border-top:1px solid #69319a;padding:9px 2px;z-index:8}.nav button{border:0;background:none;color:#c1b4d2;font-size:10px;padding:2px;white-space:nowrap}.nav button .ico{display:block;font-size:17px;margin-bottom:4px}.nav button.active{color:#e34cff}.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.quick .card{text-align:center;padding:12px 5px;font-size:20px}.quick b{display:block;font-size:11px;margin-top:5px}.field label,label{display:block;color:#d9c8ec;font-size:12px;margin:12px 0 6px}input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #63417f;background:#10091f;color:white;font:inherit}textarea{min-height:85px;resize:vertical}.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#261440;border:1px solid #a333ff;border-radius:10px;padding:11px 14px;display:none;max-width:90%;z-index:12;text-align:center;font-size:12px}
+@media(min-width:600px){body{padding:0 0 0}.wrap{box-shadow:0 0 40px #000}}
+</style></head><body><div class="wrap"><header class="top"><div><div class="brand">AREXA <span>BATTLE</span></div><div class="sub">PLAYER ARENA</div></div></header><div id="app"></div><div id="toast" class="toast"></div></div><!-- Firebase connection: AREXA BATTLE -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+const AREXA_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
+  authDomain: "arexabattle-75a47.firebaseapp.com",
+  databaseURL: "https://arexabattle-75a47-default-rtdb.firebaseio.com",
+  projectId: "arexabattle-75a47",
+  storageBucket: "arexabattle-75a47.firebasestorage.app",
+  messagingSenderId: "1028204149228",
+  appId: "1:1028204149228:web:594d12f5e50c3c1bcc68c9"
+};
+if (!firebase.apps.length) firebase.initializeApp(AREXA_FIREBASE_CONFIG);
+window.arexaDb = firebase.database();
+window.arexaFirebaseReady = true;
+</script>
+
+<script>
+const STORE='arexa_battle_three_apps_demo_v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let data=JSON.parse(localStorage.getItem(STORE)||'null')||{admin:{username:'AREXAADMIN',passHash:''},organizers:[],players:[],tournaments:[]};
+data.withdrawals=data.withdrawals||[]; data.coinRequests=data.coinRequests||[]; data.depositRequests=data.depositRequests||[]; data.transactions=data.transactions||[]; data.players.forEach(p=>{if(typeof p.demoCoins!=='number')p.demoCoins=0});
+function save(){arexaSaveCloud();render()}
+function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
+async function hash(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const SESSION_KEY='arexa_player_session';
+function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{return null}}
+function setSession(v){localStorage.setItem(SESSION_KEY,JSON.stringify(v))}
+function logout(){localStorage.removeItem(SESSION_KEY);location.reload()}
+function current(){let s=session();if(!s)return null;if(s.role==='admin')return data.admin;if(s.role==='organizer')return data.organizers.find(x=>x.username===s.username)||null;return data.players.find(x=>x.username===s.username)||null}
+function loginBox(title,role,extra=''){return `<div class="card"><h2>${title}</h2>${extra}<div class="field"><label>Username</label><input id="loginUser" autocomplete="username" placeholder="${role==='admin'?'AREXAADMIN':'Username'}" value="${role==='admin'?'AREXAADMIN':''}"></div><div class="field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password"></div><button class="btn" onclick="doLogin('${role}')">Login</button></div>`}
+async function doLogin(role){let u=$('loginUser').value.trim(),p=$('loginPass').value;if(!u||!p){toast('Username and password required');return}if(role==='admin'&&!data.admin.passHash){if(p.length<8){toast('First-time Admin password must be at least 8 characters');return}data.admin.passHash=await hash(p);localStorage.setItem(STORE,JSON.stringify(data));if(arexaCloudReady)arexaSaveCloud()}let user=role==='admin'?data.admin:role==='organizer'?data.organizers.find(x=>x.username.toLowerCase()===u.toLowerCase()):data.players.find(x=>x.username.toLowerCase()===u.toLowerCase());let h=await hash(p);if(!user||user.passHash!==h){toast('Login details not found');return}setSession({role,username:user.username});location.reload()}
+function statusTag(s){return `<span class="tag">${esc(s)}</span>`}
+function playerSignup(){return `<div class="card"><h2>Player signup</h2><label>Username</label><input id="newPlayer" maxlength="24"><label>Password (8+ characters)</label><input id="newPlayerPass" type="password"><button class="btn" onclick="createPlayer()">Create player account</button></div>`}
+async function createPlayer(){let u=$('newPlayer').value.trim(),p=$('newPlayerPass').value;if(u.length<3||p.length<8){toast('Username 3+ and password 8+ required');return}if(data.players.some(x=>x.username.toLowerCase()===u.toLowerCase())||u.toLowerCase()==='arexaadmin'){toast('Username already exists');return}data.players.push({username:u,passHash:await hash(p),created:new Date().toLocaleString(),demoCoins:0});save();toast('Player account created. Login now.')}
+
+let activeTab='Home';
+let profilePage='menu';
+const APP_VERSION='2.1.0';
+const SUPPORT_EMAIL='arexabattle7@gmail.com';
+let selectedCategory='';
+let selectedSlot='';
+let selectedTournamentId=null;
+const AREXA_CATEGORIES=['BR RANK','CS CUSTOM','LOW'];
+const AREXA_SLOT_MAP={'BR RANK':['BR Survival','BR Per Kill','BR Solo Rank','BR Duo Rank','BR Squad Rank'],'CS CUSTOM':['1v1 Custom','2v2 Custom','4v4 Custom','1v1 Headshot Only','2v2 Headshot Only','4v4 Headshot Only'],'LOW':['1v1 Headshot Only','2v2 Headshot Only']};
+function slotMode(slot){return slot.replace(' Custom','').replace(' Headshot Only','').replace('BR ','')}
+function tabButton(label,icon){return `<button class="${activeTab===label?'active':''}" onclick="showTab('${label}')"><span class="ico">${icon}</span>${label}</button>`}
+function showTab(tab){activeTab=tab;render()}
+function render(){let c=current(),root=$('app');if(!c||!session()||session().role!=='player'){root.innerHTML=loginBox('Player Login','player')+playerSignup();return}
+let open=data.tournaments.filter(t=>t.status==='Open'),joined=data.tournaments.filter(t=>t.players.includes(c.username));
+let body='';
+if(activeTab==='Home'){
+body=`<div class="hero"><div class="small" style="color:#ffb4bd">WELCOME TO THE ARENA</div><strong>AREXA BATTLE</strong><p>Play • Compete • Win</p><button class="btn" onclick="showTab('Tournament')">Explore Tournaments</button></div><div class="card profileline"><div class="avatar">🎮</div><div><b>${esc(c.username)}</b><div class="muted small">Player Arena</div></div><span class="tag">PLAYER</span></div><div class="quick"><div class="card" onclick="showTab('Tournament')">🏆<b>Tournament</b></div><div class="card" onclick="showTab('Team')">👥<b>Team</b></div><div class="card" onclick="showTab('Leaderboard')">📊<b>Leaderboard</b></div></div><div class="card"><div class="row"><div><span class="tag">YOUR ARENA AWAITS</span><h2>Ready for the Next Match?</h2><p class="small muted">Choose your mode, pick your slot, and get ready to play with the AREXA community.</p></div><div style="font-size:36px">🏆</div></div><button class="btn" onclick="showTab('Tournament')">Explore Game Modes　›</button></div>`;
+}else if(activeTab==='Tournament'){
+const categoryInfo={'BR RANK':'Battle Royale Ranked','CS CUSTOM':'Custom Map · Headshot Only','LOW':'Lone Wolf · Headshot Only'};
+const categoryCards=AREXA_CATEGORIES.map((cat,i)=>`<button class="mode-card" onclick="selectCategory('${cat}')"><div class="mode-art"></div><strong>${cat}<small>${categoryInfo[cat]}　›</small></strong></button>`).join('');
+const slots=AREXA_SLOT_MAP[selectedCategory]||[];
+const slotButtons=slots.map((slot,i)=>`<button class="slot-card" onclick='selectSlot(${JSON.stringify(slot)})'><div class="mode-art"></div><strong>${slot}<small>Open tournaments　›</small></strong></button>`).join('');
+const chosen=open.filter(t=>(t.category===selectedCategory||!t.category)&&t.mode===selectedSlot);
+const selected=selectedTournamentId==null?null:open.find(t=>t.id===selectedTournamentId);
+let tournamentContent='';
+if(selected){tournamentContent=`<button class="back" onclick="selectedTournamentId=null;render()">‹ Back to Tournaments</button><div class="crumb">HOME　›　${esc(selectedCategory)}　›　${esc(selectedSlot)}　›　<b>JOIN</b></div><div class="card"><div class="cover"><b>${esc(selected.name)}</b></div><span class="tag">${esc(selected.status||'UPCOMING')}</span><div class="meta"><div>Prize<b>${esc(selected.prize||'Not set')}</b></div><div>Players<b>${selected.players.length}/${selected.maxPlayers}</b></div><div>Entry<b>${Number(selected.entryFee||0)} Coins</b></div></div><p class="muted small">Game: ${esc(selected.game)}<br>Start time: ${esc(selected.date)}<br>Mode: ${esc(selected.mode)}</p><p>${esc(selected.rules||'No extra rules')}</p><p class="small"><b>Organizer:</b> ${esc(selected.organizer||'AREXA')}</p>${selected.players.includes(c.username)?`<div class="notice"><b>🔐 Room Details</b><br>Room ID: ${selected.roomId?esc(selected.roomId):'Not added yet'}<br>Room Password: ${selected.roomPassword?esc(selected.roomPassword):'Not added yet'}</div>`:'<p class="small muted">Join this tournament to view the room ID and password when the admin has added them.</p>'}<button class="btn" onclick="joinTour(${selected.id})" ${selected.players.includes(c.username)||selected.players.length>=selected.maxPlayers?'disabled':''}>${selected.players.includes(c.username)?'Already Joined':selected.players.length>=selected.maxPlayers?'Slots Full':'Join Tournament'}</button></div>`;}
+else if(!selectedCategory){tournamentContent=`<div class="hero"><strong>AREXA BATTLE</strong><p>Choose a tournament category and explore matches.</p></div><h2>Exclusive Modes</h2><p class="hint">Step 1 · Tap one box to open the next step.</p><div class="grid">${categoryCards}</div>`;}
+else if(!selectedSlot){tournamentContent=`<button class="back" onclick="selectedCategory='';render()">‹ Back to Categories</button><div class="crumb">HOME　›　<b>${esc(selectedCategory)}</b></div><div class="card"><div class="cover"><b>${esc(selectedCategory)}</b></div><h2>Select ${esc(selectedCategory)} Slot</h2><p class="hint">Step 2 · Choose one option below</p><div class="grid">${slotButtons}</div></div>`;}
+else{tournamentContent=`<button class="back" onclick="selectedSlot='';render()">‹ Back to ${esc(selectedCategory)}</button><div class="crumb">HOME　›　${esc(selectedCategory)}　›　<b>${esc(selectedSlot)}</b></div><div class="card"><div class="cover"><b>${esc(selectedSlot)}</b></div><p class="hint">Step 3 · Tournaments for this slot</p>${chosen.map(t=>`<section class="item"><span class="tag">UPCOMING</span><h3>${esc(t.name)}</h3><div class="muted small">${esc(t.category||selectedCategory)} · ${esc(t.mode)}</div><div class="meta"><div>Prize<b>${esc(t.prize||'Not set')}</b></div><div>Players<b>${t.players.length}/${t.maxPlayers}</b></div><div>Entry<b>${Number(t.entryFee||0)} Coins</b></div></div><div class="muted small">Start: ${esc(t.date)}</div><button class="btn" onclick="viewTournament(${t.id})">View & Join　›</button></section>`).join('')||'<p class="muted">No tournament available for this slot yet.</p>'}</div>`;}
+body=`<h1>Tournaments</h1><p class="hint">Category → Slots → Tournaments → Details → Join</p>${tournamentContent}<div class="card"><h2>My Registrations</h2>${joined.map(t=>`<div class="item"><b>${esc(t.name)}</b> ${statusTag(t.status)}<p class="small muted">${esc(t.date)} • Organizer: ${esc(t.organizer)}</p></div>`).join('')||'<p class="muted">No registrations yet.</p>'}</div>`;
+}else if(activeTab==='Team'){
+body=`<h1>My Team</h1><div class="card"><h2>Team Arena</h2><p>Create a team with friends or join a team using a team ID.</p><label>Team name</label><input id="teamName" placeholder="Enter team name"><button class="btn" onclick="createDemoTeam()">Create Team</button><div class="item"><b>My Teams</b><p class="muted small">${esc(localStorage.getItem('arexa_demo_team_'+cSafe(c.username))||'No team created in this demo yet.')}</p></div><label>Team ID</label><input placeholder="Enter Team ID" disabled><button class="btn alt" disabled>Join Team (coming soon)</button></div>`;
+}else if(activeTab==='Leaderboard'){
+let rows=[...data.players].sort((a,b)=>(b.points||0)-(a.points||0));
+body=`<h1>Leaderboard</h1><p>Demo ranking based on sample points.</p><div class="card"><h2>Top Players</h2>${rows.map((p,i)=>`<div class="item row"><b>#${i+1} ${esc(p.username)}</b><span class="stat">${Number(p.points||0).toLocaleString('en-IN')}</span></div>`).join('')||'<p class="muted">Players will appear here.</p>'}</div>`;
+}else if(activeTab==='Wallet'){
+let myReqs=data.withdrawals.filter(w=>w.username===c.username).slice().reverse();
+let pay=data.paymentSettings||{};
+body=`<h1>Wallet</h1><div class="card"><div class="small muted">COIN BALANCE</div><div class="stat">🪙 ${(Number(c.demoCoins)||0).toLocaleString('en-IN')}</div><p>Your current AREXA BATTLE coin balance.</p></div><div class="card"><div class="row"><h2>💳 Add Coins</h2><span class="tag">DEPOSIT</span></div><p>Use the official payment details below to make your deposit.</p>${pay.qrData?`<div style="text-align:center;padding:10px"><img src="${pay.qrData}" alt="AREXA BATTLE Payment QR" style="width:min(240px,100%);border-radius:12px;background:white;padding:8px"></div>`:'<p class="muted">Payment QR will be available here once added by Admin.</p>'}${pay.upiId?`<div class="item"><b>UPI ID</b><p style="color:#ffdc45">${esc(pay.upiId)}</p><button class="btn alt" onclick="copyPaymentUPI()">Copy UPI ID</button></div>`:'<p class="muted">UPI ID will be shown here once added by Admin.</p>'}${pay.payeeName?`<p class="small muted">Payee: <b>${esc(pay.payeeName)}</b></p>`:''}${pay.instructions?`<p>${esc(pay.instructions)}</p>`:''}<p class="small muted">1 INR = 1 Coin. Minimum deposit: ₹50 (50 Coins). After payment, submit your UPI transaction reference below.</p><label>Amount paid (₹)</label><input id="depositAmount" type="number" min="50" step="1" placeholder="Minimum ₹50"><label>UPI Transaction ID / UTR</label><input id="depositUtr" maxlength="80" placeholder="Enter payment reference"><button class="btn" onclick="requestDeposit()">Submit Deposit for Approval</button></div><div class="card"><h2>Withdraw Coins</h2><p class="small muted">Minimum withdrawal: 50 Coins (₹50).</p><label>Coins to withdraw</label><input id="withdrawCoins" type="number" min="50" step="1" placeholder="Minimum 50 coins"><button class="btn" onclick="requestDemoWithdrawal()">Submit Withdrawal Request</button></div><div class="card"><h2>My Withdrawal Requests</h2>${myReqs.map(w=>`<div class="item"><div class="row"><b>🪙 ${Number(w.coins).toLocaleString('en-IN')} coins</b>${statusTag(w.status)}</div><p class="small muted">${esc(w.created)}</p></div>`).join('')||'<p class="muted">No withdrawal requests yet.</p>'}</div><div class="card"><h2>My Deposit Requests</h2>${(data.depositRequests||[]).filter(r=>r.username===c.username).slice().reverse().map(r=>`<div class="item"><b>₹${r.amount} · ${r.coins} Coins</b> ${statusTag(r.status)}<p class="small muted">UTR: ${esc(r.utr)} · ${esc(r.created)}</p></div>`).join('')||'<p class="muted">No deposit requests yet.</p>'}</div><div class="card"><h2>Wallet History</h2>${data.transactions.filter(t=>t.username===c.username).slice().reverse().map(t=>`<div class="item row"><div><b>${esc(t.kind)}</b><div class="small muted">${esc(t.created)}</div></div><span class="stat">${Number(t.coins)>0?'+':''}${Number(t.coins)} 🪙</span></div>`).join('')||'<p class="muted">No wallet activity yet.</p>'}</div>`;
+}else{
+const teamName=localStorage.getItem('arexa_demo_team_'+cSafe(c.username))||'';
+const settings=playerSettings(c.username);
+const back=`<button class="back" onclick="profilePage='menu';render()">‹ Back to My Account</button>`;
+if(profilePage==='edit'){
+body=`${back}<h1>👤 Edit Profile</h1><div class="card"><p class="small muted">Apni player details update karein. Login username change nahi hoga.</p><label>Display Name</label><input id="profileDisplay" maxlength="32" value="${esc(c.displayName||c.username)}" placeholder="Your name"><label>In-game Name</label><input id="profileGame" maxlength="32" value="${esc(c.gameName||'')}" placeholder="Your gaming name"><label>Game UID</label><input id="profileUid" maxlength="40" value="${esc(c.gameUid||'')}" placeholder="Enter game UID"><button class="btn" onclick="savePlayerProfile()">Save Profile</button></div>`;
+}else if(profilePage==='teams'){
+body=`${back}<h1>👥 My Teams</h1><div class="card"><h2>Team Arena</h2><p>${teamName?`Your current team: <b>${esc(teamName)}</b>`:'Abhi aapne koi team create nahi ki hai.'}</p><button class="btn" onclick="showTab('Team')">Open Team Manager</button><p class="small muted">Team create karne aur manage karne ke liye Team tab kholein.</p></div>`;
+}else if(profilePage==='tournaments'){
+body=`${back}<h1>🏆 My Tournaments (${joined.length})</h1><div class="card">${joined.map(t=>`<div class="item"><b>${esc(t.name)}</b> ${statusTag(t.status)}<p class="small muted">${esc(t.game||'Game')} · ${esc(t.mode||'Mode')}<br>${esc(t.date||'Schedule not set')}</p></div>`).join('')||'<p class="muted">Abhi aap kisi tournament mein joined nahi hain. Tournament tab se match join karein.</p>'}<button class="btn" onclick="showTab('Tournament')">Explore Tournaments</button></div>`;
+}else if(profilePage==='settings'){
+body=`${back}<h1>⚙️ Settings</h1><div class="card"><h2>App Preferences</h2><label>Language</label><select id="prefLanguage" onchange="updatePlayerSetting('language',this.value)"><option value="English" ${settings.language==='English'?'selected':''}>English</option><option value="Hindi" ${settings.language==='Hindi'?'selected':''}>हिन्दी</option></select><div class="item row"><span>🔔 Notifications</span><input style="width:22px" type="checkbox" ${settings.notifications?'checked':''} onchange="updatePlayerSetting('notifications',this.checked)"></div><div class="item row"><span>🔊 Sound</span><input style="width:22px" type="checkbox" ${settings.sound?'checked':''} onchange="updatePlayerSetting('sound',this.checked)"></div></div><div class="card"><h2>App Update</h2><p class="small muted">Installed version: <b>v${APP_VERSION}</b></p><button class="btn" onclick="checkAppUpdate()">Check for App Updates</button><p class="small muted">Update file milne par latest HTML file download karke purani file replace karein. Is offline HTML demo mein automatic online update abhi enabled nahi hai.</p></div>`;
+}else if(profilePage==='support'){
+body=`${back}<h1>❔ Help & Support</h1><div class="card"><div class="cover"><b>We're Here to Help</b></div><h2>AREXA BATTLE Support</h2><p>Account, team, tournament ya app se judi kisi bhi problem ke liye humein email karein. Apni problem detail mein likhein aur zarurat ho to screenshot attach karein.</p><div class="item"><b>📧 Official Support Email</b><p><a style="color:#ffdc45" href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p><button class="btn" onclick="contactSupport()">Email Support</button><button class="btn alt" onclick="copySupportEmail()">Copy Email</button></div><p class="small muted">Message mein apna player username aur issue ka short description zaroor likhein. Password ya OTP kabhi share na karein.</p></div>`;
+}else{
+body=`<h1>My Account</h1><div class="card profileline"><div class="avatar">👤</div><div><b>${esc(c.displayName||c.username)}</b><div class="small muted">@${esc(c.username)} · AREXA BATTLE Player</div></div></div><div class="card"><div class="item" onclick="profilePage='edit';render()">👤 Edit Profile <span class="muted small">›</span></div><div class="item" onclick="profilePage='teams';render()">👥 My Teams <span class="muted small">›</span></div><div class="item" onclick="profilePage='tournaments';render()">🏆 My Tournaments (${joined.length}) <span class="muted small">›</span></div><div class="item" onclick="profilePage='settings';render()">⚙️ Settings <span class="muted small">›</span></div><div class="item" onclick="profilePage='support';render()">❔ Help & Support <span class="muted small">›</span></div></div><button class="btn alt" onclick="logout()">Logout</button>`;
+}
+}
+root.innerHTML=`<div class="page">${body}<div class="notice">Play smart. Team up. Climb the leaderboard. Your AREXA BATTLE journey starts here!</div></div><nav class="nav">${tabButton('Home','⌂')}${tabButton('Tournament','🏆')}${tabButton('Team','👥')}${tabButton('Leaderboard','📊')}${tabButton('Wallet','🪙')}${tabButton('My Account','👤')}</nav>`;
+}
+
+function playerSettings(username){try{return JSON.parse(localStorage.getItem('arexa_player_settings_'+cSafe(username))||'null')||{language:'English',notifications:true,sound:true}}catch{return {language:'English',notifications:true,sound:true}}}
+function updatePlayerSetting(key,value){let c=current(),v=playerSettings(c.username);v[key]=value;localStorage.setItem('arexa_player_settings_'+cSafe(c.username),JSON.stringify(v));toast('Setting updated')}
+function savePlayerProfile(){let c=current(),display=$('profileDisplay')?.value.trim(),game=$('profileGame')?.value.trim(),uid=$('profileUid')?.value.trim();if(!display){toast('Display name is required');return}c.displayName=display;c.gameName=game;c.gameUid=uid;save();profilePage='menu';toast('Profile updated successfully')}
+function contactSupport(){let c=current();let subject=encodeURIComponent('AREXA BATTLE Support Request');let body=encodeURIComponent('Hello AREXA BATTLE Support,\n\nPlayer Username: '+c.username+'\nIssue:\n\nPlease help me.');location.href='mailto:'+SUPPORT_EMAIL+'?subject='+subject+'&body='+body}
+function copySupportEmail(){if(navigator.clipboard?.writeText){navigator.clipboard.writeText(SUPPORT_EMAIL).then(()=>toast('Support email copied')).catch(()=>toast(SUPPORT_EMAIL))}else toast(SUPPORT_EMAIL)}
+function checkAppUpdate(){toast('You are using AREXA BATTLE v'+APP_VERSION+'. Latest app file should be installed manually.')}
+
+function selectCategory(category){selectedCategory=category;selectedSlot='';selectedTournamentId=null;render()}
+function selectSlot(slot){selectedSlot=slot;selectedTournamentId=null;render()}
+function viewTournament(id){selectedTournamentId=id;render()}
+function copyPaymentUPI(){let id=(data.paymentSettings||{}).upiId||'';if(!id){toast('UPI ID not added yet');return}if(navigator.clipboard?.writeText)navigator.clipboard.writeText(id).then(()=>toast('UPI ID copied')).catch(()=>toast(id));else toast(id)}
+function requestDemoCoins(){let n=Number($('coinRequestAmount')?.value),c=current();if(!Number.isSafeInteger(n)||n<1||n>1000000){toast('Enter a valid whole number of demo coins');return}let pending=data.coinRequests.filter(r=>r.username===c.username&&r.status==='Pending');if(pending.length){toast('You already have a pending coin request');return}data.coinRequests.push({id:Date.now(),username:c.username,coins:n,status:'Pending',created:new Date().toLocaleString()});save();toast('Demo coin request sent')}
+function requestDemoWithdrawal(){let n=Number($('withdrawCoins')?.value),c=current();if(!Number.isSafeInteger(n)||n<50){toast('Minimum withdrawal is 50 coins');return}if(n>(Number(c.demoCoins)||0)){toast('Not enough available coins');return}c.demoCoins=Number(c.demoCoins||0)-n;data.withdrawals.push({id:Date.now(),username:c.username,coins:n,status:'Pending',created:new Date().toLocaleString(),held:true});data.transactions.push({id:Date.now()+1,username:c.username,kind:'Withdrawal requested (coins held)',coins:-n,created:new Date().toLocaleString()});save();toast('Withdrawal request sent. Coins are held pending approval')}
+function createDemoTeam(){let n=$('teamName')?.value.trim();if(!n){toast('Enter a team name');return}let k='arexa_demo_team_'+cSafe(current().username);localStorage.setItem(k,n);toast('Demo team created');render()}
+function cSafe(s){return String(s).replace(/[^a-z0-9_-]/gi,'_')}
+function joinTour(id){let c=current(),t=data.tournaments.find(x=>x.id===id&&x.status==='Open');if(!t||t.players.includes(c.username)||t.players.length>=t.maxPlayers)return;let fee=Math.max(0,Number(t.entryFee||0));if(Number(c.demoCoins||0)<fee){toast('Not enough coins. Add coins from Wallet.');return}if(fee){c.demoCoins-=fee;data.transactions.push({id:Date.now(),username:c.username,kind:'Tournament entry: '+t.name,coins:-fee,created:new Date().toLocaleString()})}t.players.push(c.username);save();toast(fee+' coins deducted. Tournament joined!');selectedTournamentId=id;render()}
+
+/* AREXA shared Firebase sync — same database path in all three panels */
+const AREXA_CLOUD_PATH = 'arexaBattle/sharedData';
+let arexaCloudReady = false;
+let arexaApplyingRemote = false;
+function arexaNormalize(d){
+ d=d&&typeof d==='object'?d:{};
+ d.admin=d.admin||{username:'AREXAADMIN',passHash:''};
+ for(const k of ['organizers','players','tournaments','withdrawals','coinRequests','depositRequests','transactions']) if(!Array.isArray(d[k])) d[k]=[];
+ d.paymentSettings=d.paymentSettings||{};
+ d.players.forEach(p=>{if(typeof p.demoCoins!=='number')p.demoCoins=0;});
+ return d;
+}
+async function arexaStartSync(){
+ try{
+  const ref=window.arexaDb.ref(AREXA_CLOUD_PATH);
+  const snap=await ref.once('value');
+  const local=arexaNormalize(data);
+  if(snap.exists()){
+   const cloud=arexaNormalize(snap.val());
+   // Preserve a previously configured local Admin password; otherwise use cloud credentials.
+   const localAdminHash=local.admin && local.admin.passHash;
+   data=cloud;
+   if(localAdminHash) data.admin={...cloud.admin,...local.admin,passHash:localAdminHash};
+   // Keep local data if cloud collection is empty, preventing accidental first-sync data loss.
+   for(const k of ['organizers','players','tournaments','withdrawals','coinRequests','depositRequests','transactions']) if(!data[k].length && local[k].length) data[k]=local[k];
+   if(!Object.keys(data.paymentSettings||{}).length && Object.keys(local.paymentSettings||{}).length) data.paymentSettings=local.paymentSettings;
+   await ref.set(data);
+  }else{
+   data=local;
+   await ref.set(data);
+  }
+  localStorage.setItem(STORE,JSON.stringify(data));
+  arexaCloudReady=true;
+  if(typeof render==='function')render();
+  ref.on('value',s=>{
+   if(arexaApplyingRemote||!s.exists())return;
+   const incoming=arexaNormalize(s.val());
+   if(JSON.stringify(incoming)!==JSON.stringify(data)){
+    arexaApplyingRemote=true; data=incoming; localStorage.setItem(STORE,JSON.stringify(data));
+    if(typeof render==='function')render();
+    arexaApplyingRemote=false;
+   }
+  },e=>{console.error('AREXA Firebase listener:',e);if(typeof toast==='function')toast('Firebase read blocked — check Database Rules');});
+  if(typeof toast==='function')toast('Firebase connected — shared data loaded');
+ }catch(e){console.error('AREXA Firebase sync failed:',e);arexaCloudReady=false;if(typeof toast==='function')toast('Firebase unavailable. Local mode active.');}
+}
+function arexaSaveCloud(){
+ localStorage.setItem(STORE,JSON.stringify(data));
+ if(!arexaCloudReady||arexaApplyingRemote)return;
+ window.arexaDb.ref(AREXA_CLOUD_PATH).set(data).catch(e=>{console.error('AREXA Firebase write:',e);if(typeof toast==='function')toast('Firebase save failed — check Database Rules');});
+}
+window.addEventListener('storage',e=>{if(e.key===STORE&&e.newValue){try{data=arexaNormalize(JSON.parse(e.newValue));if(typeof render==='function')render();}catch(_){}}});
+
+render();
+arexaStartSync();
+
+</script></body></html>

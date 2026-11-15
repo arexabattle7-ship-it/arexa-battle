@@ -27,26 +27,39 @@ if (!firebase.apps.length) firebase.initializeApp(AREXA_FIREBASE_CONFIG);
 window.arexaDb = firebase.database();
 </script>
 
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
 <script>
-  const AREXA_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
-    authDomain: "arexabattle-75a47.firebaseapp.com",
-    databaseURL: "https://arexabattle-75a47-default-rtdb.firebaseio.com",
-    projectId: "arexabattle-75a47",
-    storageBucket: "arexabattle-75a47.firebasestorage.app",
-    messagingSenderId: "1028204149228",
-    appId: "1:1028204149228:web:594d12f5e50c3c1bcc68c9",
-    measurementId: "G-N9HKERV39L"
-  };
-  if (!firebase.apps.length) firebase.initializeApp(AREXA_FIREBASE_CONFIG);
-  window.arexaFirebase = {
-    app: firebase.app(),
-    auth: firebase.auth(),
-    db: firebase.database()
-  };
-  window.arexaFirebaseReady = true;
-  console.info("AREXA BATTLE Firebase initialized");
+const AREXA_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
+  authDomain: "arexabattle-75a47.firebaseapp.com",
+  databaseURL: "https://arexabattle-75a47-default-rtdb.firebaseio.com",
+  projectId: "arexabattle-75a47",
+  storageBucket: "arexabattle-75a47.firebasestorage.app",
+  messagingSenderId: "1028204149228",
+  appId: "1:1028204149228:web:594d12f5e50c3c1bcc68c9",
+  measurementId: "G-N9HKERV39L"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(AREXA_FIREBASE_CONFIG);
+}
+
+window.arexaFirebase = {
+  app: firebase.app(),
+  auth: firebase.auth(),
+  db: firebase.database()
+};
+
+window.arexaDb = window.arexaFirebase.db;
+window.arexaFirebaseReady = true;
+
+console.info("AREXA BATTLE Firebase initialized");
 </script>
+
 
 <script>
 const STORE='arexa_battle_three_apps_demo_v1';

@@ -1,0 +1,29 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "arexaBattle": {
+      "public": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.admin === true"
+      },
+      "users": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+          ".write": false
+        }
+      },
+      "wallets": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+          ".write": false
+        }
+      },
+      "admin": {
+        ".read": "auth != null && auth.token.admin === true",
+        ".write": "auth != null && auth.token.admin === true"
+      },
+      "usernameIndex": { ".read": false, ".write": false }
+    }
+  }
+}

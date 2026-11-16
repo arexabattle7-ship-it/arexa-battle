@@ -35,6 +35,9 @@ async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder
 let data = {admin:{username:'AREXAADMIN',passHash:''},players:[],tournaments:[],withdrawals:[],depositRequests:[],coinRequests:[],transactions:[],paymentSettings:{}};
 let cloudReady = false;
 let tab = 'home';
+let selCat = '';
+let selSlot = '';
+let selTour = null;
 
 function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch{return null}}
 function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
@@ -127,31 +130,62 @@ function render(){
   else if(tab==='tour'){
     let open = data.tournaments.filter(t=>t.status==='Open');
     let joined = data.tournaments.filter(t=>(t.players||[]).includes(c.username));
-    body = `<h2>🏆 Open Tournaments</h2>`;
-    if(open.length===0){
-      body += `<div class="card"><p class="muted">No open tournaments right now. Check back soon!</p></div>`;
-    } else {
-      open.forEach(t=>{
-        let isJoined = (t.players||[]).includes(c.username);
-        body += `<div class="card">
-          <b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
-          <p class="small muted">Mode: ${esc(t.mode||'')} • Entry: ${Number(t.entryFee||0)} Coins • Players: ${(t.players||[]).length}/${t.maxPlayers||0}</p>
-          <p class="small muted">Prize: ${esc(t.prize||'Not set')} • Start: ${esc(t.date||'')}</p>
-          ${isJoined?`<div class="notice">🔐 Room ID: ${t.roomId?esc(t.roomId):'Not set yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not set yet'}</div>`:''}
-          <button class="btn ${isJoined?'alt':''}" onclick="joinT(${t.id})" ${isJoined?'disabled':''}>${isJoined?'✓ Joined':'Join Tournament'}</button>
+    const CATS = ['BR RANK','CS CUSTOM','LONE WOLF'];
+    const SLOTS = {
+      'BR RANK':['BR Survival','BR Per Kill','BR Solo Rank','BR Duo Rank','BR Squad Rank'],
+      'CS CUSTOM':['1v1 Custom','2v2 Custom','4v4 Custom','1v1 Headshot Only','2v2 Headshot Only','4v4 Headshot Only'],
+      'LONE WOLF':['1v1 Headshot Only','2v2 Headshot Only']
+    };
+    const CATINFO = {'BR RANK':'Battle Royale Ranked','CS CUSTOM':'Custom Map Matches','LONE WOLF':'Lone Wolf · Headshot Only'};
+
+    if(selTour!==null){
+      let t = open.find(x=>x.id===selTour);
+      if(!t){selTour=null;render();return}
+      let isJoined=(t.players||[]).includes(c.username);
+      body=`<button onclick="selTour=null;selSlot='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back</button>
+        <div class="card">
+          <b style="font-size:18px">${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
+          <p class="small muted">Mode: ${esc(t.mode||'')} • Entry: ${Number(t.entryFee||0)} Coins</p>
+          <p class="small muted">Players: ${(t.players||[]).length}/${t.maxPlayers||0} • Prize: ${esc(t.prize||'Not set')}</p>
+          <p class="small muted">Start: ${esc(t.date||'')}</p>
+          ${isJoined?`<div class="notice">🔐 <b>Room Details</b><br>Room ID: ${t.roomId?esc(t.roomId):'Not added yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not added yet'}</div>`:'<p class="small muted">Join to see Room ID and Password.</p>'}
+          <button class="btn ${isJoined?'alt':''}" onclick="joinT(${t.id})" ${isJoined||(t.players||[]).length>=(t.maxPlayers||0)?'disabled':''}>${isJoined?'✓ Already Joined':(t.players||[]).length>=(t.maxPlayers||0)?'Slots Full':'Join Tournament'}</button>
         </div>`;
-      });
     }
-    body += `<h2>My Registrations</h2>`;
-    if(joined.length===0){
-      body += `<div class="card"><p class="muted">No registrations yet.</p></div>`;
-    } else {
-      joined.forEach(t=>{
-        body += `<div class="card">
-          <b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
+    else if(!selCat){
+      body=`<h2>🏆 Tournaments</h2><p class="small muted">Select a category to explore matches.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+        ${CATS.map(cat=>`<button onclick="selCat='${cat}';render()" style="border:1px solid #9840d0;border-radius:14px;background:linear-gradient(135deg,#562184,#170d32 48%,#8e2d77);min-height:120px;color:white;cursor:pointer;padding:16px;text-align:left">
+          <div style="font-size:22px">${cat==='BR RANK'?'🎯':cat==='CS CUSTOM'?'⚔️':'🐺'}</div>
+          <b style="display:block;margin-top:8px">${cat}</b>
+          <small style="color:#d9c7ec;font-size:10px">${CATINFO[cat]}</small>
+        </button>`).join('')}
+        </div>
+        <h2>My Registrations</h2>
+        ${joined.map(t=>`<div class="card"><b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
           ${(t.status==='Open'||t.status==='Live')?`<div class="notice">🔐 Room ID: ${t.roomId?esc(t.roomId):'Not set yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not set yet'}</div>`:''}
+        </div>`).join('')||'<div class="card"><p class="muted">No registrations yet.</p></div>'}`;
+    }
+    else if(!selSlot){
+      let slots = SLOTS[selCat]||[];
+      body=`<button onclick="selCat='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back to Categories</button>
+        <h2>${selCat}</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+        ${slots.map(s=>`<button onclick="selSlot='${s}';render()" style="border:1px solid #9840d0;border-radius:14px;background:linear-gradient(135deg,#562184,#170d32 48%,#8e2d77);min-height:100px;color:white;cursor:pointer;padding:14px;text-align:left">
+          <b style="font-size:13px">${s}</b>
+        </button>`).join('')}
         </div>`;
-      });
+    }
+    else{
+      let matches = open.filter(t=>t.category===selCat&&t.mode===selSlot);
+      body=`<button onclick="selSlot='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back to ${selCat}</button>
+        <h2>${selSlot}</h2>
+        ${matches.map(t=>`<div class="card">
+          <b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
+          <p class="small muted">Entry: ${Number(t.entryFee||0)} Coins • Players: ${(t.players||[]).length}/${t.maxPlayers||0}</p>
+          <p class="small muted">Prize: ${esc(t.prize||'Not set')} • Start: ${esc(t.date||'')}</p>
+          <button class="btn" onclick="selTour=${t.id};render()">View & Join ›</button>
+        </div>`).join('')||'<div class="card"><p class="muted">No tournaments in this slot yet.</p></div>'}`;
     }
   }
   

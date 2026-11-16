@@ -209,10 +209,11 @@ function render(){
       <div class="card">
         <b>💸 Withdraw Coins</b>
         <div class="field"><label>Coins (min 50)</label><input id="wa" type="number" min="50" placeholder="50"></div>
+        <div class="field"><label>Your UPI ID</label><input id="wu" placeholder="example@upi" autocapitalize="off" autocomplete="off"></div>
         <button class="btn alt" onclick="withdraw()">Withdraw</button>
       </div>
       <div class="card"><b>Deposit History</b>${myD.map(r=>`<div class="item small">₹${r.amount} · <span class="tag">${esc(r.status)}</span> · ${esc(r.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>
-      <div class="card"><b>Withdrawal History</b>${myW.map(w=>`<div class="item small">🪙${w.coins} · <span class="tag">${esc(w.status)}</span> · ${esc(w.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>`;
+      <div class="card"><b>Withdrawal History</b>${myW.map(w=>`<div class="item small">🪙${w.coins} · ${esc(w.upi||'')} · <span class="tag">${esc(w.status)}</span> · ${esc(w.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>`;
   }
   
   else if(tab==='lb'){
@@ -288,10 +289,12 @@ function deposit(){
 function withdraw(){
   let coins=Number($('wa')?.value), c=me();
   if(!coins||coins<50){toast('Minimum 50 coins');return}
+  let upi=($('wu')?.value||'').trim();
+  if(!/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(upi)){toast('Enter a valid UPI ID (e.g. name@upi)');return}
   if(Number(c.demoCoins||0)<coins){toast('Not enough coins');return}
   c.demoCoins=Number(c.demoCoins||0)-coins;
   data.withdrawals=data.withdrawals||[];
-  data.withdrawals.push({id:Date.now(),username:c.username,coins,status:'Pending',created:new Date().toLocaleString()});
+  data.withdrawals.push({id:Date.now(),username:c.username,coins,upi,status:'Pending',created:new Date().toLocaleString()});
   saveCloud();
   toast('Withdrawal request sent!');
   render();

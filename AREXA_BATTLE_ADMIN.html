@@ -1,178 +1,351 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AREXA BATTLE Main Admin</title><style>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AREXA BATTLE Admin</title><style>
 :root{--bg:#080b12;--panel:#111827;--line:#273449;--red:#ef3340;--muted:#9aa8bb;--white:#f5f7fb;--green:#22c55e;--gold:#f5c451}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#182235,#080b12 48%);color:var(--white);font:15px Arial,sans-serif}
 .wrap{max-width:1000px;margin:auto;padding:18px 14px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .brand{font-weight:900;font-size:20px;letter-spacing:1px}.brand span{color:var(--red)}.sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px}
-h1{font-size:30px;margin:24px 0 8px}h2{font-size:20px;margin:8px 0 14px}h3{margin:5px 0 10px}
+h1{font-size:30px;margin:24px 0 8px}h2{font-size:20px;margin:8px 0 14px}
 p,.muted{color:var(--muted);line-height:1.5}.card{background:linear-gradient(145deg,#151f30,#0e1521);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 label{display:block;color:#c8d2e1;font-size:13px;margin:12px 0 6px}input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #34445c;background:#080e18;color:white;font:inherit}
 textarea{min-height:85px;resize:vertical}.btn{border:0;border-radius:10px;padding:11px 15px;background:var(--red);color:white;font-weight:800;cursor:pointer;margin:4px 4px 4px 0}.btn.alt{background:#273449}.btn.good{background:#15803d}.btn.warn{background:#9a3412}.btn:disabled{opacity:.45;cursor:not-allowed}
-.nav{display:flex;gap:8px;overflow:auto;padding:14px 0}.nav button{white-space:nowrap}.hidden{display:none!important}.tag{font-size:11px;border:1px solid #46566c;padding:4px 8px;border-radius:20px;color:#d8e1ee}.stat{font-size:24px;font-weight:900;color:var(--gold)}
+.tag{font-size:11px;border:1px solid #46566c;padding:4px 8px;border-radius:20px;color:#d8e1ee}.stat{font-size:24px;font-weight:900;color:var(--gold)}
 .notice{border:1px solid #665327;background:#241e11;color:#f7d98b;padding:12px;border-radius:12px;font-size:13px;line-height:1.5}
-.item{padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.small{font-size:12px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#263449;padding:12px 18px;border-radius:12px;display:none;max-width:90%;z-index:9}
-@media(max-width:600px){h1{font-size:25px}.wrap{padding:12px 12px 40px}.top{align-items:flex-start}}
-</style></head><body><div class="wrap"><header class="top"><div class="brand">AREXA <span>BATTLE</span><div class="sub">MAIN ADMIN CONTROLLER</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><a class="tag" href="AREXA_BATTLE_ORGANIZER.html" style="text-decoration:none;font-weight:800">ORGANIZER LOGIN ↗</a><span class="tag">MAIN ADMIN CONTROLLER</span></div></header><h1>Main Admin Controller</h1><p>Organizer accounts, tournament approvals and player oversight.</p><div id="app"></div><div id="toast" class="toast"></div></div><!-- Firebase connection: AREXA BATTLE -->
+.item{padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.small{font-size:12px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#263449;padding:12px 18px;border-radius:12px;display:none;max-width:90%;z-index:9}
+</style></head><body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">AREXA <span>BATTLE</span><div class="sub">MAIN ADMIN CONTROLLER</div></div>
+  <span class="tag">ADMIN PANEL</span>
+</header>
+<div id="app"><p style="color:#ccc;padding:20px">Loading...</p></div>
+<div id="toast" class="toast"></div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
-const AREXA_FIREBASE_CONFIG = {
- apiKey: "AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
- authDomain: "arexabattle-75a47.firebaseapp.com",
- databaseURL: "https://arexabattle-75a47-default-rtdb.firebaseio.com",
- projectId: "arexabattle-75a47",
- storageBucket: "arexabattle-75a47.firebasestorage.app",
- messagingSenderId: "1028204149228",
- appId: "1:1028204149228:web:594d12f5e50c3c1bcc68c9"
-};
-if (!firebase.apps.length) firebase.initializeApp(AREXA_FIREBASE_CONFIG);
-window.arexaDb = firebase.database();
-</script>
-
-<script>
-  const AREXA_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
-    authDomain: "arexabattle-75a47.firebaseapp.com",
-    databaseURL: "https://arexabattle-75a47-default-rtdb.firebaseio.com",
-    projectId: "arexabattle-75a47",
-    storageBucket: "arexabattle-75a47.firebasestorage.app",
-    messagingSenderId: "1028204149228",
-    appId: "1:1028204149228:web:594d12f5e50c3c1bcc68c9",
-    measurementId: "G-N9HKERV39L"
-  };
-  if (!firebase.apps.length) firebase.initializeApp(AREXA_FIREBASE_CONFIG);
-  window.arexaFirebase = {
-    app: firebase.app(),
-    auth: firebase.auth(),
-    db: firebase.database()
-  };
-  window.arexaFirebaseReady = true;
-  console.info("AREXA BATTLE Firebase initialized");
-</script>
-
-<script>
-const STORE='arexa_battle_three_apps_demo_v1';
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let data=JSON.parse(localStorage.getItem(STORE)||'null')||{admin:{username:'AREXAADMIN',passHash:''},organizers:[],players:[],tournaments:[]};
-data.withdrawals=data.withdrawals||[]; data.coinRequests=data.coinRequests||[]; data.depositRequests=data.depositRequests||[]; data.transactions=data.transactions||[]; data.paymentSettings=data.paymentSettings||{}; data.players.forEach(p=>{if(typeof p.demoCoins!=='number')p.demoCoins=0});
-function save(){arexaSaveCloud();render()}
-function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
-async function hash(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-const SESSION_KEY='arexa_admin_session';
-function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{return null}}
-function setSession(v){localStorage.setItem(SESSION_KEY,JSON.stringify(v))}
-function logout(){localStorage.removeItem(SESSION_KEY);location.reload()}
-function current(){let s=session();if(!s)return null;if(s.role==='admin')return data.admin;if(s.role==='organizer')return data.organizers.find(x=>x.username===s.username)||null;return data.players.find(x=>x.username===s.username)||null}
-function loginBox(title,role,extra=''){return `<div class="card"><h2>${title}</h2>${extra}<div class="field"><label>Username</label><input id="loginUser" autocomplete="username" placeholder="${role==='admin'?'AREXAADMIN':'Username'}" value="${role==='admin'?'AREXAADMIN':''}"></div><div class="field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password"></div><button class="btn" onclick="doLogin('${role}')">Login</button></div>`}
-async function doLogin(role){let u=$('loginUser').value.trim(),p=$('loginPass').value;if(!u||!p){toast('Username and password required');return}if(role==='admin'&&!data.admin.passHash){if(p.length<8){toast('First-time Admin password must be at least 8 characters');return}data.admin.passHash=await hash(p);localStorage.setItem(STORE,JSON.stringify(data));if(arexaCloudReady)arexaSaveCloud()}let user=role==='admin'?data.admin:role==='organizer'?data.organizers.find(x=>x.username.toLowerCase()===u.toLowerCase()):data.players.find(x=>x.username.toLowerCase()===u.toLowerCase());let h=await hash(p);if(!user||user.passHash!==h){toast('Login details not found');return}setSession({role,username:user.username});location.reload()}
-function statusTag(s){return `<span class="tag">${esc(s)}</span>`}
-function playerSignup(){return `<div class="card"><h2>Player signup</h2><label>Username</label><input id="newPlayer" maxlength="24"><label>Password (8+ characters)</label><input id="newPlayerPass" type="password"><button class="btn" onclick="createPlayer()">Create player account</button></div>`}
-async function createPlayer(){let u=$('newPlayer').value.trim(),p=$('newPlayerPass').value;if(u.length<3||p.length<8){toast('Username 3+ and password 8+ required');return}if(data.players.some(x=>x.username.toLowerCase()===u.toLowerCase())||u.toLowerCase()==='arexaadmin'){toast('Username already exists');return}data.players.push({username:u,passHash:await hash(p),created:new Date().toLocaleString()});save();toast('Player account created. Login now.')}
-
-function render(){let c=current(),root=$('app');if(!c||!session()||session().role!=='admin'){root.innerHTML=loginBox('Main Admin Login','admin','<div class="notice">Admin username is AREXAADMIN. First use: choose an 8+ character password. No Gmail login.</div>');return}
-root.innerHTML=`<div class="grid"><div class="card"><div class="stat">${data.organizers.length}</div><div class="muted">Organizers</div></div><div class="card"><div class="stat">${data.players.length}</div><div class="muted">Players</div></div><div class="card"><div class="stat">${data.tournaments.length}</div><div class="muted">Tournaments</div></div></div>
-<div class="card"><h2>🏆 Admin: Create Tournament</h2><p class="small muted">Create and publish tournaments directly from the Main Admin account.</p>
-<label>Tournament name</label><input id="admTName" maxlength="60" placeholder="AREXA Custom Cup">
-<div class="grid"><div><label>Category</label><select id="admTCategory"><option>BR RANK</option><option>CS CUSTOM</option><option>LOW</option></select></div><div><label>Game</label><input id="admTGame" value="Free Fire"></div>
-<div><label>Mode</label><select id="admTMode"><option>BR Survival</option><option>BR Per Kill</option><option>BR Solo Rank</option><option>BR Duo Rank</option><option>BR Squad Rank</option><option>1v1 Custom</option><option>2v2 Custom</option><option>4v4 Custom</option><option>1v1 Headshot Only</option><option>2v2 Headshot Only</option><option>4v4 Headshot Only</option><option>Solo</option><option>Duo</option><option>Squad</option><option>Custom Room</option><option>1v1</option><option>2v2</option><option>4v4</option></select></div>
-<div><label>Date and time</label><input id="admTDate" type="datetime-local"></div><div><label>Maximum players</label><input id="admTMax" type="number" min="2" max="100" value="48"></div><div><label>Entry Fee (Coins)</label><input id="admTFee" type="number" min="0" step="1" value="0"></div></div>
-<label>Room ID (optional)</label><input id="admRoomId" maxlength="40" placeholder="Enter custom room ID"><label>Room Password (optional)</label><input id="admRoomPass" maxlength="80" placeholder="Enter room password">
-<label>Prize description</label><input id="admTPrize" placeholder="e.g. AREXA points"><label>Rules / description</label><textarea id="admTRules" placeholder="Rules, map, rounds, eligibility..."></textarea>
-<button class="btn good" onclick="adminCreateTournament()">Create & Publish Tournament</button></div>
-<div class="card"><h2>💳 Wallet Payment Settings</h2><p class="small muted">Add or update the payment QR and UPI ID. These details will appear in the Player Wallet when both apps are hosted on the same website origin.</p><label>UPI ID</label><input id="payUpi" value="${esc(data.paymentSettings.upiId||'')}" placeholder="yourname@bank"><label>Payee Name</label><input id="payeeName" value="${esc(data.paymentSettings.payeeName||'')}" placeholder="AREXA BATTLE"><label>Payment Instructions</label><textarea id="payInstructions" placeholder="Enter payment instructions">${esc(data.paymentSettings.instructions||'')}</textarea><label>Upload Payment QR Image</label><input id="payQrFile" type="file" accept="image/png,image/jpeg,image/webp"><div class="small muted">${data.paymentSettings.qrData?'Current QR is saved. Upload a new image to replace it.':'No QR image uploaded yet.'}</div>${data.paymentSettings.qrData?`<img src="${data.paymentSettings.qrData}" alt="Current payment QR" style="width:170px;max-width:100%;background:white;padding:6px;border-radius:10px;margin-top:8px">`:''}<button class="btn" onclick="savePaymentSettings()">Save Payment Details</button></div>
-<div class="card"><h2>Tournament Approval Queue</h2><div id="pendingTours"></div></div><div class="card"><h2>All Tournaments</h2><div id="allTours"></div></div><div class="card"><h2>Demo Coin Requests</h2><div id="coinRequestQueue"></div></div><div class="card"><h2>Deposit Approval Queue</h2><div id="depositQueue"></div></div><div class="card"><h2>Withdrawal Requests</h2><div id="withdrawalQueue"></div></div><div class="card"><h2>Players</h2><div id="playersList"></div></div><div class="notice">Payment QR and UPI details are displayed for payer reference only. Payment confirmation and coin credit must be verified by Admin.</div><button class="btn alt" onclick="logout()">Logout</button>`;
-
-$('pendingTours').innerHTML=data.tournaments.filter(t=>t.status==='Pending Admin Approval').map(t=>`<div class="item"><b>${esc(t.name)}</b> ${statusTag(t.status)}<p class="small muted">By ${esc(t.organizer)} • ${esc(t.game)} • ${esc(t.mode)} • ${esc(t.date)}</p><button class="btn good" onclick="approveTour(${t.id})">Approve</button><button class="btn warn" onclick="rejectTour(${t.id})">Reject</button></div>`).join('')||'<p class="muted">No pending tournaments.</p>';
-$('allTours').innerHTML=data.tournaments.map(t=>`<div class="item"><div class="row"><b>${esc(t.name)}</b>${statusTag(t.status)}</div><p class="small muted">Organizer: ${esc(t.organizer||'Main Admin')} • ${esc(t.game)} • ${esc(t.mode)} • Players: ${t.players.length}/${t.maxPlayers}</p><div class="grid"><div><label>Room ID</label><input id="roomId_${t.id}" value="${esc(t.roomId||'')}" placeholder="Room ID"></div><div><label>Room Password</label><input id="roomPass_${t.id}" value="${esc(t.roomPassword||'')}" placeholder="Room Password"></div></div><div class="row"><button class="btn good" onclick="saveRoomDetails(${t.id})">Save Room Details</button><button class="btn alt" onclick="setTournamentStatus(${t.id},'Open')">Publish / Open</button><button class="btn warn" onclick="setTournamentStatus(${t.id},'Closed')">Close</button></div></div>`).join('')||'<p class="muted">No tournaments yet.</p>';
-$('coinRequestQueue').innerHTML=data.coinRequests.slice().reverse().map(r=>`<div class="item"><div class="row"><b>${esc(r.username)} — 🪙 ${Number(r.coins).toLocaleString('en-IN')} demo coins</b>${statusTag(r.status)}</div><p class="small muted">${esc(r.created)}</p>${r.status==='Pending'?`<button class="btn good" onclick="approveCoinRequest(${r.id})">Approve</button><button class="btn warn" onclick="rejectCoinRequest(${r.id})">Reject</button>`:''}</div>`).join('')||'<p class="muted">No pending coin requests.</p>';$('depositQueue').innerHTML=(data.depositRequests||[]).slice().reverse().map(r=>`<div class="item"><b>${esc(r.username)} · ₹${r.amount} / ${r.coins} Coins</b> ${statusTag(r.status)}<p class="small muted">UTR: ${esc(r.utr)} · ${esc(r.created)}</p>${r.status==='Pending'?`<button class="btn good" onclick="approveDeposit(${r.id})">Approve & Add Coins</button><button class="btn warn" onclick="rejectDeposit(${r.id})">Reject</button>`:''}</div>`).join('')||'<p class="muted">No deposit requests.</p>';$('withdrawalQueue').innerHTML=data.withdrawals.slice().reverse().map(w=>{let p=data.players.find(x=>x.username===w.username);return `<div class="item"><div class="row"><b>${esc(w.username)} — 🪙 ${Number(w.coins).toLocaleString('en-IN')} demo coins</b>${statusTag(w.status)}</div><p class="small muted">${esc(w.created)}</p>${w.status==='Pending'?`<button class="btn good" onclick="approveWithdrawal(${w.id})">Approve</button><button class="btn warn" onclick="rejectWithdrawal(${w.id})">Reject</button>`:''}${w.status==='Approved'?'<p class="small muted">Coins paid / request approved.</p>':''}</div>`}).join('')||'<p class="muted">No withdrawal requests.</p>';
-$('playersList').innerHTML=data.players.map(p=>`<div class="item"><div class="row"><b>${esc(p.username)}</b><span class="tag">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')} demo coins</span></div><div class="small muted">${esc(p.created||'')}</div><div class="row" style="margin-top:8px"><input id="coins_${esc(p.username)}" type="number" min="1" step="1" placeholder="Coins amount" style="max-width:140px"><button class="btn alt" onclick="adjustCoins('${esc(p.username)}',1)">Add Coins</button><button class="btn warn" onclick="adjustCoins('${esc(p.username)}',-1)">Deduct Coins</button></div></div>`).join('')||'<p class="muted">No players yet.</p>'}
-async function savePaymentSettings(){let upi=$('payUpi').value.trim(),payee=$('payeeName').value.trim(),instructions=$('payInstructions').value.trim(),file=$('payQrFile').files[0];if(upi&&!/^[A-Za-z0-9._-]{2,256}@[A-Za-z0-9.-]{2,64}$/.test(upi)){toast('Enter a valid UPI ID');return}let finish=(qr)=>{data.paymentSettings={upiId:upi,payeeName:payee,instructions,qrData:qr||data.paymentSettings.qrData||''};save();toast('Wallet payment details updated')};if(file){if(file.size>1200000){toast('QR image must be smaller than 1.2 MB');return}if(!file.type.startsWith('image/')){toast('Please choose an image file');return}let reader=new FileReader();reader.onload=()=>finish(String(reader.result));reader.onerror=()=>toast('Could not read QR image');reader.readAsDataURL(file)}else finish('')}
-async function createOrganizer(){let u=$('orgUser').value.trim(),p=$('orgPass').value,n=$('orgName').value.trim();if(u.length<3||p.length<8){toast('Username 3+ and password 8+ required');return}if(data.organizers.some(x=>x.username.toLowerCase()===u.toLowerCase())||u.toLowerCase()==='arexaadmin'){toast('Username already used');return}data.organizers.push({username:u,name:n,passHash:await hash(p),created:new Date().toLocaleString()});save();toast('Organizer account created')}
-function downloadOrganizerLogin(username){const o=data.organizers.find(x=>x.username.toLowerCase()===String(username).toLowerCase());if(!o){toast('Organizer not found');return}const payload={app:'AREXA_BATTLE_ORGANIZER_LOGIN',version:1,organizer:o};const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='AREXA_ORGANIZER_'+o.username+'.json';a.click();URL.revokeObjectURL(url);toast('Login file exported. Send it privately to Organizer.')}
-function removeOrganizer(u){if(!confirm('Remove organizer '+u+'?'))return;data.organizers=data.organizers.filter(x=>x.username!==u);save()}
-function addDemoCoins(username){let p=data.players.find(x=>x.username===username),n=Number($('coins_'+username)?.value);if(!p||!Number.isSafeInteger(n)||n<1){toast('Enter a valid whole number of demo coins');return}p.demoCoins=Number(p.demoCoins||0)+n;data.transactions.push({id:Date.now(),username,kind:'Admin added demo coins',coins:n,created:new Date().toLocaleString()});save();toast('Demo coins added')}
-function approveCoinRequest(id){let r=data.coinRequests.find(x=>x.id===id&&x.status==='Pending');if(!r)return;let p=data.players.find(x=>x.username===r.username);if(!p){r.status='Rejected';save();toast('Player not found');return}p.demoCoins=Number(p.demoCoins||0)+r.coins;r.status='Approved';r.reviewedBy='Main Admin';r.reviewed=new Date().toLocaleString();data.transactions.push({id:Date.now(),username:r.username,kind:'Demo coin request approved',coins:r.coins,created:new Date().toLocaleString()});save();toast('Demo coin request approved')}
-function rejectCoinRequest(id){let r=data.coinRequests.find(x=>x.id===id&&x.status==='Pending');if(!r)return;r.status='Rejected';r.reviewedBy='Main Admin';r.reviewed=new Date().toLocaleString();save();toast('Demo coin request rejected')}
-function approveWithdrawal(id){let w=data.withdrawals.find(x=>x.id===id&&x.status==='Pending');if(!w)return;w.status='Approved';w.reviewed=new Date().toLocaleString();w.reviewedBy='Main Admin';save();toast('Withdrawal approved')}
-function rejectWithdrawal(id){let w=data.withdrawals.find(x=>x.id===id&&x.status==='Pending');if(!w)return;let p=data.players.find(x=>x.username===w.username);if(p&&w.held){p.demoCoins=Number(p.demoCoins||0)+w.coins;data.transactions.push({id:Date.now(),username:w.username,kind:'Withdrawal rejected - coins refunded',coins:w.coins,created:new Date().toLocaleString()})}w.status='Rejected';w.reviewed=new Date().toLocaleString();save();toast('Withdrawal rejected; coins refunded')}
-function adjustCoins(username,sign){let p=data.players.find(x=>x.username===username),n=Number($('coins_'+username)?.value);if(!p||!Number.isSafeInteger(n)||n<1){toast('Enter a valid coin amount');return}if(sign<0&&Number(p.demoCoins||0)<n){toast('Player does not have enough coins');return}p.demoCoins=Number(p.demoCoins||0)+sign*n;data.transactions.push({id:Date.now(),username,kind:sign>0?'Admin added coins':'Admin deducted coins',coins:sign*n,created:new Date().toLocaleString()});save();toast('Player coin balance updated')}
-function approveDeposit(id){let r=(data.depositRequests||[]).find(x=>x.id===id&&x.status==='Pending');if(!r)return;let p=data.players.find(x=>x.username===r.username);if(!p){r.status='Rejected';save();return}p.demoCoins=Number(p.demoCoins||0)+Number(r.coins);r.status='Approved';r.reviewedBy='Main Admin';r.reviewed=new Date().toLocaleString();data.transactions.push({id:Date.now(),username:r.username,kind:'Deposit approved',coins:Number(r.coins),created:new Date().toLocaleString()});save();toast('Deposit approved; coins added')}
-function rejectDeposit(id){let r=(data.depositRequests||[]).find(x=>x.id===id&&x.status==='Pending');if(!r)return;r.status='Rejected';r.reviewedBy='Main Admin';r.reviewed=new Date().toLocaleString();save();toast('Deposit rejected')}
-function approveTour(id){let t=data.tournaments.find(x=>x.id===id);if(t){t.status='Open';save();toast('Tournament approved')}}
-function rejectTour(id){let t=data.tournaments.find(x=>x.id===id);if(t){t.status='Rejected';save();toast('Tournament rejected')}}
-
-function adminCreateTournament(){
- const name=$('admTName').value.trim(),game=$('admTGame').value.trim(),date=$('admTDate').value;
- const max=Number($('admTMax').value),entryFee=Number($('admTFee').value);
- if(!name||!game||!date||max<2||max>100||!Number.isInteger(max)||!Number.isSafeInteger(entryFee)||entryFee<0){toast('Tournament name, game, date, player limit (2-100) and valid fee are required');return}
- const id=Date.now();
- data.tournaments=data.tournaments||[];
- data.tournaments.push({id,name,game,category:$('admTCategory').value,mode:$('admTMode').value,date,organizer:'MAIN ADMIN',createdBy:'MAIN ADMIN',createdAt:new Date().toISOString(),maxPlayers:max,entryFee,roomId:$('admRoomId').value.trim(),roomPassword:$('admRoomPass').value.trim(),rules:$('admTRules').value.trim(),prize:$('admTPrize').value.trim(),players:[],status:'Open'});
- save();
- ['admTName','admTDate','admRoomId','admRoomPass','admTPrize','admTRules'].forEach(id=>{const el=$(id);if(el)el.value=''});
- $('admTMax').value='48';$('admTFee').value='0';
- toast('Success! Main Admin tournament created and published for Players.');
+// Firebase - single init
+if(!firebase.apps.length){
+  firebase.initializeApp({
+    apiKey:"AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
+    authDomain:"arexabattle-75a47.firebaseapp.com",
+    databaseURL:"https://arexabattle-75a47-default-rtdb.firebaseio.com",
+    projectId:"arexabattle-75a47",
+    storageBucket:"arexabattle-75a47.firebasestorage.app",
+    messagingSenderId:"1028204149228",
+    appId:"1:1028204149228:web:594d12f5e50c3c1bcc68c9"
+  });
 }
-function saveRoomDetails(id){let t=data.tournaments.find(x=>x.id===id);if(!t)return;t.roomId=$('roomId_'+id).value.trim();t.roomPassword=$('roomPass_'+id).value.trim();save();toast('Room ID and password saved')}
-function setTournamentStatus(id,status){let t=data.tournaments.find(x=>x.id===id);if(!t)return;t.status=status;save();toast('Tournament status updated')}
+const db = firebase.database();
+const CLOUD = 'arexaBattle/sharedData';
+const SKEY = 'arexa_admin_session';
 
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
+async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 
-/* AREXA shared Firebase sync — same database path in all three panels */
-const AREXA_CLOUD_PATH = 'arexaBattle/sharedData';
-let arexaCloudReady = false;
-let arexaApplyingRemote = false;
-function arexaNormalize(d){
- d=d&&typeof d==='object'?d:{};
- d.admin=d.admin||{username:'AREXAADMIN',passHash:''};
- for(const k of ['organizers','players','tournaments','withdrawals','coinRequests','depositRequests','transactions']) if(!Array.isArray(d[k])) d[k]=[];
- d.paymentSettings=d.paymentSettings||{};
- d.players.forEach(p=>{if(typeof p.demoCoins!=='number')p.demoCoins=0;});
- return d;
+let data={admin:{username:'AREXAADMIN',passHash:''},players:[],tournaments:[],withdrawals:[],depositRequests:[],coinRequests:[],transactions:[],paymentSettings:{}};
+let cloudReady=false;
+
+function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch{return null}}
+function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
+function logout(){localStorage.removeItem(SKEY);location.reload()}
+function saveCloud(){if(!cloudReady)return;db.ref(CLOUD).set(data).catch(e=>console.error(e))}
+function save(){saveCloud();render()}
+
+async function init(){
+  try{
+    let snap=await db.ref(CLOUD).once('value');
+    if(snap.exists()){
+      let d=snap.val();
+      if(d.admin?.passHash) data.admin=d.admin;
+      data.players=d.players||[];
+      data.tournaments=d.tournaments||[];
+      data.withdrawals=d.withdrawals||[];
+      data.depositRequests=d.depositRequests||[];
+      data.coinRequests=d.coinRequests||[];
+      data.transactions=d.transactions||[];
+      data.paymentSettings=d.paymentSettings||{};
+    }
+    cloudReady=true;
+    db.ref(CLOUD).on('value',snap=>{
+      if(!snap.exists())return;
+      let d=snap.val();
+      if(d.admin?.passHash) data.admin=d.admin;
+      data.players=d.players||[];
+      data.tournaments=d.tournaments||[];
+      data.withdrawals=d.withdrawals||[];
+      data.depositRequests=d.depositRequests||[];
+      data.coinRequests=d.coinRequests||[];
+      data.transactions=d.transactions||[];
+      data.paymentSettings=d.paymentSettings||{};
+      render();
+    });
+    toast('Firebase connected ✓');
+  }catch(e){console.error(e);toast('Offline mode');}
+  render();
 }
-async function arexaStartSync(){
- try{
-  const ref=window.arexaDb.ref(AREXA_CLOUD_PATH);
-  const snap=await ref.once('value');
-  const local=arexaNormalize(data);
-  if(snap.exists()){
-   const cloud=arexaNormalize(snap.val());
-   // Preserve a previously configured local Admin password; otherwise use cloud credentials.
-   const localAdminHash=local.admin && local.admin.passHash;
-   data=cloud;
-   if(localAdminHash) data.admin={...cloud.admin,...local.admin,passHash:localAdminHash};
-   // Keep local data if cloud collection is empty, preventing accidental first-sync data loss.
-   for(const k of ['organizers','players','tournaments','withdrawals','coinRequests','depositRequests','transactions']) if(!data[k].length && local[k].length) data[k]=local[k];
-   if(!Object.keys(data.paymentSettings||{}).length && Object.keys(local.paymentSettings||{}).length) data.paymentSettings=local.paymentSettings;
-   await ref.set(data);
-  }else{
-   data=local;
-   await ref.set(data);
+
+function render(){
+  let s=session(), root=$('app');
+  if(!s||s.role!=='admin'){
+    root.innerHTML=`
+      <div class="card">
+        <h2>🔐 Admin Login</h2>
+        <div class="notice">Username: AREXAADMIN. First time: set 8+ char password.</div>
+        <label>Username</label><input id="lu" value="AREXAADMIN">
+        <label>Password</label><input id="lp" type="password" placeholder="Password">
+        <button class="btn" onclick="doLogin()">Login</button>
+      </div>`;
+    return;
   }
-  localStorage.setItem(STORE,JSON.stringify(data));
-  arexaCloudReady=true;
-  if(typeof render==='function')render();
-  ref.on('value',s=>{
-   if(arexaApplyingRemote||!s.exists())return;
-   const incoming=arexaNormalize(s.val());
-   if(JSON.stringify(incoming)!==JSON.stringify(data)){
-    arexaApplyingRemote=true; data=incoming; localStorage.setItem(STORE,JSON.stringify(data));
-    if(typeof render==='function')render();
-    arexaApplyingRemote=false;
-   }
-  },e=>{console.error('AREXA Firebase listener:',e);if(typeof toast==='function')toast('Firebase read blocked — check Database Rules');});
-  if(typeof toast==='function')toast('Firebase connected — shared data loaded');
- }catch(e){console.error('AREXA Firebase sync failed:',e);arexaCloudReady=false;if(typeof toast==='function')toast('Firebase unavailable. Local mode active.');}
-}
-function arexaSaveCloud(){
- localStorage.setItem(STORE,JSON.stringify(data));
- if(!arexaCloudReady||arexaApplyingRemote)return;
- window.arexaDb.ref(AREXA_CLOUD_PATH).set(data).catch(e=>{console.error('AREXA Firebase write:',e);if(typeof toast==='function')toast('Firebase save failed — check Database Rules');});
-}
-window.addEventListener('storage',e=>{if(e.key===STORE&&e.newValue){try{data=arexaNormalize(JSON.parse(e.newValue));if(typeof render==='function')render();}catch(_){}}});
 
-render();
-arexaStartSync();
+  let pending = data.tournaments.filter(t=>t.status==='Pending Admin Approval');
+  let pendingDeposits = (data.depositRequests||[]).filter(r=>r.status==='Pending');
+  let pendingWithdrawals = (data.withdrawals||[]).filter(w=>w.status==='Pending');
 
-</script></body></html>
+  root.innerHTML=`
+    <div class="grid">
+      <div class="card"><div class="stat">${data.players.length}</div><div class="muted">Players</div></div>
+      <div class="card"><div class="stat">${data.tournaments.length}</div><div class="muted">Tournaments</div></div>
+      <div class="card"><div class="stat" style="color:#ef3340">${pendingDeposits.length}</div><div class="muted">Pending Deposits</div></div>
+      <div class="card"><div class="stat" style="color:#f5c451">${pendingWithdrawals.length}</div><div class="muted">Pending Withdrawals</div></div>
+    </div>
+
+    <!-- CREATE TOURNAMENT -->
+    <div class="card">
+      <h2>🏆 Create Tournament</h2>
+      <label>Tournament Name</label><input id="tName" placeholder="AREXA Cup">
+      <div class="grid">
+        <div><label>Category</label><select id="tCat"><option>BR RANK</option><option>CS CUSTOM</option><option>LONE WOLF</option></select></div>
+        <div><label>Game</label><input id="tGame" value="Free Fire"></div>
+        <div><label>Mode</label><select id="tMode"><option>BR Survival</option><option>BR Per Kill</option><option>BR Solo Rank</option><option>BR Duo Rank</option><option>BR Squad Rank</option><option>1v1 Custom</option><option>2v2 Custom</option><option>4v4 Custom</option><option>1v1 Headshot Only</option><option>2v2 Headshot Only</option><option>4v4 Headshot Only</option></select></div>
+        <div><label>Date & Time</label><input id="tDate" type="datetime-local"></div>
+        <div><label>Max Players</label><input id="tMax" type="number" value="48"></div>
+        <div><label>Entry Fee (Coins)</label><input id="tFee" type="number" value="0"></div>
+      </div>
+      <label>Room ID</label><input id="tRoomId" placeholder="Room ID (optional)">
+      <label>Room Password</label><input id="tRoomPass" placeholder="Room Password (optional)">
+      <label>Prize</label><input id="tPrize" placeholder="e.g. 500 Coins">
+      <label>Rules</label><textarea id="tRules" placeholder="Tournament rules..."></textarea>
+      <button class="btn good" onclick="createTournament()">Create & Publish Tournament</button>
+    </div>
+
+    <!-- ALL TOURNAMENTS -->
+    <div class="card">
+      <h2>All Tournaments</h2>
+      <div id="allTours"></div>
+    </div>
+
+    <!-- DEPOSIT APPROVALS -->
+    <div class="card">
+      <h2>💳 Deposit Approval Queue</h2>
+      <div id="depositQueue"></div>
+    </div>
+
+    <!-- WITHDRAWAL APPROVALS -->
+    <div class="card">
+      <h2>💸 Withdrawal Requests</h2>
+      <div id="withdrawalQueue"></div>
+    </div>
+
+    <!-- PLAYERS WITH COINS -->
+    <div class="card">
+      <h2>👥 Players — Coins Management</h2>
+      <div id="playersList"></div>
+    </div>
+
+    <!-- PAYMENT SETTINGS -->
+    <div class="card">
+      <h2>💳 Payment Settings</h2>
+      <label>UPI ID</label><input id="payUpi" value="${esc(data.paymentSettings.upiId||'')}" placeholder="yourname@bank">
+      <label>Payee Name</label><input id="payName" value="${esc(data.paymentSettings.payeeName||'')}" placeholder="AREXA BATTLE">
+      <label>Instructions</label><textarea id="payInst" placeholder="Payment instructions">${esc(data.paymentSettings.instructions||'')}</textarea>
+      <label>Upload QR Image</label><input id="payQr" type="file" accept="image/*">
+      ${data.paymentSettings.qrData?`<img src="${data.paymentSettings.qrData}" style="width:150px;background:white;padding:6px;border-radius:8px;margin-top:8px">`:''}
+      <button class="btn" onclick="savePayment()">Save Payment Settings</button>
+    </div>
+
+    <button class="btn alt" onclick="logout()">Logout</button>
+  `;
+
+  // ALL TOURNAMENTS
+  $('allTours').innerHTML = data.tournaments.map(t=>`
+    <div class="item">
+      <div class="row"><b>${esc(t.name)}</b><span class="tag">${esc(t.status)}</span></div>
+      <p class="small muted">${esc(t.game)} • ${esc(t.mode)} • Players: ${(t.players||[]).length}/${t.maxPlayers}</p>
+      <div class="grid">
+        <div><label>Room ID</label><input id="rid_${t.id}" value="${esc(t.roomId||'')}" placeholder="Room ID"></div>
+        <div><label>Room Password</label><input id="rpass_${t.id}" value="${esc(t.roomPassword||'')}" placeholder="Password"></div>
+      </div>
+      <div class="row">
+        <button class="btn good" onclick="saveRoom(${t.id})">Save Room Details</button>
+        <button class="btn alt" onclick="setStatus(${t.id},'Open')">Open</button>
+        <button class="btn warn" onclick="setStatus(${t.id},'Closed')">Close</button>
+      </div>
+    </div>`).join('')||'<p class="muted">No tournaments yet.</p>';
+
+  // DEPOSIT QUEUE
+  $('depositQueue').innerHTML = (data.depositRequests||[]).slice().reverse().map(r=>`
+    <div class="item">
+      <div class="row"><b>${esc(r.username)} — ₹${r.amount} = ${r.coins} Coins</b><span class="tag">${esc(r.status)}</span></div>
+      <p class="small muted">UTR: ${esc(r.utr)} • ${esc(r.created)}</p>
+      ${r.status==='Pending'?`<button class="btn good" onclick="approveDeposit(${r.id})">✅ Approve & Add Coins</button><button class="btn warn" onclick="rejectDeposit(${r.id})">❌ Reject</button>`:''}
+    </div>`).join('')||'<p class="muted">No deposit requests.</p>';
+
+  // WITHDRAWAL QUEUE
+  $('withdrawalQueue').innerHTML = (data.withdrawals||[]).slice().reverse().map(w=>`
+    <div class="item">
+      <div class="row"><b>${esc(w.username)} — 🪙 ${Number(w.coins).toLocaleString('en-IN')} Coins</b><span class="tag">${esc(w.status)}</span></div>
+      <p class="small muted">${esc(w.created)}</p>
+      ${w.status==='Pending'?`<button class="btn good" onclick="approveWithdrawal(${w.id})">✅ Approve</button><button class="btn warn" onclick="rejectWithdrawal(${w.id})">❌ Reject</button>`:''}
+    </div>`).join('')||'<p class="muted">No withdrawal requests.</p>';
+
+  // PLAYERS LIST WITH COINS ADD/DEDUCT
+  $('playersList').innerHTML = data.players.map(p=>`
+    <div class="item">
+      <div class="row">
+        <b>${esc(p.username)}</b>
+        <span class="tag">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')} Coins</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="coins_${esc(p.username)}" type="number" min="1" placeholder="Amount" style="max-width:130px">
+        <button class="btn good" onclick="adjustCoins('${esc(p.username)}',1)">➕ Add Coins</button>
+        <button class="btn warn" onclick="adjustCoins('${esc(p.username)}',-1)">➖ Deduct Coins</button>
+      </div>
+    </div>`).join('')||'<p class="muted">No players yet.</p>';
+}
+
+async function doLogin(){
+  let u=$('lu')?.value.trim(), p=$('lp')?.value;
+  if(!u||!p){toast('Fill all fields');return}
+  if(u.toLowerCase()!=='arexaadmin'){toast('Wrong username');return}
+  if(!data.admin.passHash){
+    if(p.length<8){toast('Password must be 8+ characters');return}
+    data.admin.passHash=await sha(p);
+    saveCloud();
+  }
+  let h=await sha(p);
+  if(data.admin.passHash!==h){toast('Wrong password');return}
+  setSession({role:'admin',username:'AREXAADMIN'});
+  render();
+  toast('Welcome Admin!');
+}
+
+function createTournament(){
+  let name=$('tName')?.value.trim();
+  if(!name){toast('Enter tournament name');return}
+  let t={
+    id:Date.now(),
+    name,
+    category:$('tCat')?.value,
+    game:$('tGame')?.value||'Free Fire',
+    mode:$('tMode')?.value,
+    date:$('tDate')?.value,
+    maxPlayers:Number($('tMax')?.value||48),
+    entryFee:Number($('tFee')?.value||0),
+    roomId:$('tRoomId')?.value.trim(),
+    roomPassword:$('tRoomPass')?.value.trim(),
+    prize:$('tPrize')?.value.trim(),
+    rules:$('tRules')?.value.trim(),
+    status:'Open',
+    organizer:'AREXAADMIN',
+    players:[],
+    created:new Date().toLocaleString()
+  };
+  data.tournaments.push(t);
+  save();
+  toast('Tournament created & published!');
+}
+
+function saveRoom(id){
+  let t=data.tournaments.find(x=>x.id===id);
+  if(!t)return;
+  t.roomId=$('rid_'+id)?.value.trim();
+  t.roomPassword=$('rpass_'+id)?.value.trim();
+  save();
+  toast('Room details saved!');
+}
+
+function setStatus(id,status){
+  let t=data.tournaments.find(x=>x.id===id);
+  if(!t)return;
+  t.status=status;
+  save();
+  toast('Status updated: '+status);
+}
+
+function adjustCoins(username, dir){
+  let p=data.players.find(x=>x.username===username);
+  let n=Number($('coins_'+username)?.value);
+  if(!p||!n||n<1){toast('Enter valid amount');return}
+  if(dir===-1&&Number(p.demoCoins||0)<n){toast('Player does not have enough coins');return}
+  p.demoCoins=Number(p.demoCoins||0)+(dir*n);
+  data.transactions.push({id:Date.now(),username,kind:dir===1?'Admin added coins':'Admin deducted coins',coins:dir*n,created:new Date().toLocaleString()});
+  save();
+  toast(dir===1?`✅ ${n} coins added to ${username}`:`✅ ${n} coins deducted from ${username}`);
+}
+
+function approveDeposit(id){
+  let r=(data.depositRequests||[]).find(x=>x.id===id&&x.status==='Pending');
+  if(!r)return;
+  let p=data.players.find(x=>x.username===r.username);
+  if(!p){toast('Player not found');r.status='Rejected';save();return}
+  p.demoCoins=Number(p.demoCoins||0)+Number(r.coins);
+  r.status='Approved';
+  r.reviewed=new Date().toLocaleString();
+  data.transactions.push({id:Date.now(),username:r.username,kind:'Deposit approved',coins:r.coins,created:new Date().toLocaleString()});
+  save();
+  toast('✅ Deposit approved! '+r.coins+' coins added to '+r.username);
+}
+
+function rejectDeposit(id){
+  let r=(data.depositRequests||[]).find(x=>x.id===id&&x.status==='Pending');
+  if(!r)return;
+  r.status='Rejected';
+  r.reviewed=new Date().toLocaleString();
+  save();
+  toast('❌ Deposit rejected');
+}
+
+function approveWithdrawal(id){
+  let w=(data.withdrawals||[]).find(x=>x.id===id&&x.status==='Pending');
+  if(!w)return;
+  w.status='Approved';
+  w.reviewed=new Date().toLocaleString();
+  save();
+  toast('✅ Withdrawal approved for '+w.username);
+}
+
+function rejectWithdrawal(id){
+  let w=(data.withdrawals||[]).find(x=>x.id===id&&x.status==='Pending');
+  if(!w)return;
+  let p=data.players.find(x=>x.username===w.username);
+  if(p) p.demoCoins=Number(p.demoCoins||0)+Number(w.coins);
+  w.status='Rejected';
+  w.reviewed=new Date().toLocaleString();
+  data.transactions.push({id:Date.now(),username:w.username,kind:'Withdrawal rejected - coins refunded',coins:w.coins,created:new Date().toLocaleString()});
+  save();
+  toast('❌ Withdrawal rejected, coins refunded');
+}
+
+async function savePayment(){
+  let upi=$('payUpi')?.value.trim(), name=$('payName')?.value.trim(), inst=$('payInst')?.value.trim(), file=$('payQr')?.files[0];
+  let finish=(qr)=>{
+    data.paymentSettings={upiId:upi,payeeName:name,instructions:inst,qrData:qr||data.paymentSettings.qrData||''};
+    save();toast('Payment settings saved!');
+  };
+  if(file){
+    if(file.size>1200000){toast('Image must be under 1.2MB');return}
+    let reader=new FileReader();
+    reader.onload=()=>finish(String(reader.result));
+    reader.readAsDataURL(file);
+  } else finish('');
+}
+
+init();
+</script>
+</body></html>

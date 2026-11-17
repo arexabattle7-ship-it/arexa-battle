@@ -43,7 +43,7 @@ async function init(){
     db.ref(CLOUD).on('value',s=>{if(!s.exists())return;let a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&a.id)return;load(s.val());render()});
     toast('Firebase connected ✓')}catch(e){console.error(e);toast('Offline mode')}
   render()}
-const TABS=[['dash','📊 Dashboard'],['tour','🏆 Tournaments'],['slots','🎟️ Slots'],['wallet','💰 Wallet'],['players','👥 Players'],['pay','💳 Payment']];
+const TABS=[['dash','📊 Dashboard'],['tour','🏆 Tournaments'],['slots','🎟️ Slots'],['wallet','💰 Wallet'],['players','👥 Players'],['pay','💳 Payment'],['org','🧑‍💼 Organisers']];
 function render(){
   let s=session(),root=$('app');
   if(!s||s.role!=='admin'){root.innerHTML=`<div class="card"><h2>🔐 Admin Login</h2><div class="notice">Username: AREXAADMIN. First time: set 8+ char password.</div><label>Username</label><input id="lu" value="AREXAADMIN"><label>Password</label><input id="lp" type="password"><button class="btn" onclick="doLogin()">Login</button></div>`;return}
@@ -67,10 +67,11 @@ function render(){
     <div class="card"><h2>💸 Withdrawals</h2>${data.withdrawals.slice().reverse().map(w=>`<div class="item"><div class="row"><b>${esc(w.username)} — 🪙 ${Number(w.coins).toLocaleString('en-IN')}</b><span class="tag">${esc(w.status)}</span></div><p class="small muted">${esc(w.created)}</p>${upiHtml(upiOf(w.username,w))}<br>${w.status==='Pending'?`<button class="btn good" onclick="approveWithdrawal(${w.id})">✅ Approve</button><button class="btn warn" onclick="rejectWithdrawal(${w.id})">❌ Reject</button>`:''}</div>`).join('')||'<p class="muted">No withdrawals.</p>'}</div>
     <div class="card"><h2>🧾 Transactions</h2>${data.transactions.slice().reverse().slice(0,50).map(t=>`<div class="item small"><b>${esc(t.username)}</b> • ${esc(t.kind)} • <span class="stat" style="font-size:14px">${t.coins}</span><br><span class="muted">${esc(t.created)}</span></div>`).join('')||'<p class="muted">No transactions.</p>'}</div>`;
   if(tab==='players'){let L=data.players.filter(p=>p.username.toLowerCase().includes(q.toLowerCase()));
-    h+=`<div class="card"><h2>👥 Players & Coins</h2><input id="psearch" placeholder="Search player..." value="${esc(q)}" oninput="q=this.value;render();$('psearch').focus()"></div><div class="card">${L.map(p=>`<div class="item"><div class="row"><b>${esc(p.username)}</b><span class="tag">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')}</span></div>${upiHtml(getUpi(p))}
-    <div class="row" style="margin-top:10px"><input id="coins_${esc(p.username)}" type="number" min="1" placeholder="Amount" style="max-width:130px"><button class="btn good" onclick="adjustCoins('${esc(p.username)}',1)">➕ Add</button><button class="btn warn" onclick="adjustCoins('${esc(p.username)}',-1)">➖ Deduct</button></div></div>`).join('')||'<p class="muted">No players.</p>'}</div>`}
+    h+=`<div class="card"><h2>👥 Players & Coins</h2><input id="psearch" placeholder="Search player..." value="${esc(q)}" oninput="q=this.value;render();$('psearch').focus()"></div><div class="card"><div id="plist" style="max-height:65vh;overflow-y:auto">${L.map(p=>`<div class="item"><div class="row"><b>${esc(p.username)}</b><span class="tag">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')}</span></div>${upiHtml(getUpi(p))}
+    <div class="row" style="margin-top:10px"><input id="coins_${esc(p.username)}" type="number" min="1" placeholder="Amount" style="max-width:130px"><button class="btn good" onclick="adjustCoins('${esc(p.username)}',1)">➕ Add</button><button class="btn warn" onclick="adjustCoins('${esc(p.username)}',-1)">➖ Deduct</button><button class="btn warn" style="background:#7f1d1d" onclick="deletePlayer('${esc(p.username)}')">🗑 Delete</button></div></div>`).join('')||'<p class="muted">No players.</p>'}</div></div>`}
   if(tab==='pay')h+=`<div class="card"><h2>💳 Payment Settings</h2><label>UPI ID</label><input id="payUpi" value="${esc(data.paymentSettings.upiId||'')}"><label>Payee Name</label><input id="payName" value="${esc(data.paymentSettings.payeeName||'')}"><label>Instructions</label><textarea id="payInst">${esc(data.paymentSettings.instructions||'')}</textarea><label>QR Image</label><input id="payQr" type="file" accept="image/*">${data.paymentSettings.qrData?`<img src="${data.paymentSettings.qrData}" style="width:150px;background:#fff;padding:6px;border-radius:8px;margin-top:8px">`:''}<button class="btn" onclick="savePayment()">Save</button></div>`;
-  root.innerHTML=h}
+  if(tab==='org')h+=orgHtml();
+  let pl=$('plist'),st=pl?pl.scrollTop:0;root.innerHTML=h;let pn=$('plist');if(pn)pn.scrollTop=st}
 async function doLogin(){let u=$('lu')?.value.trim(),p=$('lp')?.value;if(!u||!p){toast('Fill all fields');return}
   if(u.toLowerCase()!=='arexaadmin'){toast('Wrong username');return}
   if(!data.admin.passHash){if(p.length<8){toast('Password 8+ chars');return}data.admin.passHash=await sha(p);saveCloud()}
@@ -87,6 +88,11 @@ function addSlots(id,dir){let t=data.tournaments.find(x=>x.id===id),n=Number($('
 function adjustCoins(u,dir){let p=data.players.find(x=>x.username===u),n=Number($('coins_'+u)?.value);if(!p||!n||n<1){toast('Enter valid amount');return}
   if(dir===-1&&Number(p.demoCoins||0)<n){toast('Not enough coins');return}
   p.demoCoins=Number(p.demoCoins||0)+dir*n;data.transactions.push({id:Date.now(),username:u,kind:dir===1?'Admin added coins':'Admin deducted coins',coins:dir*n,created:new Date().toLocaleString()});save();toast('Done')}
+function deletePlayer(u){let p=data.players.find(x=>x.username===u);if(!p)return;if(!confirm('Player "'+u+'" delete karna hai? Ye wapas nahi hoga.'))return;
+  data.players=data.players.filter(x=>x.username!==u);
+  data.tournaments.forEach(t=>{if(Array.isArray(t.players))t.players=t.players.filter(x=>(typeof x==='string'?x:(x&&x.username))!==u)});
+  save();toast('🗑 '+u+' deleted');
+  try{db.ref('arexaBattle/presence/'+u.replace(/[.#$\[\]\/]/g,'_')).remove()}catch(e){}}
 function approveDeposit(id){let r=data.depositRequests.find(x=>x.id===id&&x.status==='Pending');if(!r)return;let p=data.players.find(x=>x.username===r.username);
   if(!p){toast('Player not found');r.status='Rejected';save();return}
   p.demoCoins=Number(p.demoCoins||0)+Number(r.coins);r.status='Approved';r.reviewed=new Date().toLocaleString();
@@ -98,5 +104,17 @@ function rejectWithdrawal(id){let w=data.withdrawals.find(x=>x.id===id&&x.status
 function savePayment(){let upi=$('payUpi').value.trim(),name=$('payName').value.trim(),inst=$('payInst').value.trim(),f=$('payQr').files[0];
   let fin=qr=>{data.paymentSettings={upiId:upi,payeeName:name,instructions:inst,qrData:qr||data.paymentSettings.qrData||''};save();toast('Saved!')};
   if(f){if(f.size>1200000){toast('Image < 1.2MB');return}let r=new FileReader();r.onload=()=>fin(String(r.result));r.readAsDataURL(f)}else fin('')}
+const ORG='arexaBattle/organisers',LOGS='arexaBattle/organiserLogs';let orgs={},orgLogs=[];
+const okey=u=>String(u).toUpperCase().replace(/[.#$\[\]\/]/g,'_');
+const idle=()=>!/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||'');
+db.ref(ORG).on('value',s=>{orgs=s.val()||{};if(idle())render()});
+db.ref(LOGS).limitToLast(60).on('value',s=>{orgLogs=Object.values(s.val()||{}).reverse();if(idle())render()});
+function orgHtml(){return `<div class="card"><h2>🧑‍💼 Create Organiser ID</h2><label>Username</label><input id="ou" autocapitalize="off"><label>Password (6+)</label><input id="op"><button class="btn good" onclick="addOrg()">Create</button></div>
+<div class="card"><h2>Organisers</h2>${Object.entries(orgs).map(([k,o])=>`<div class="item"><div class="row"><b>${esc(o.username)}</b><span class="tag">${o.active===false?'Disabled':'Active'}</span></div><button class="btn alt" onclick="toggleOrg('${k}',${o.active===false})">${o.active===false?'Enable':'Disable'}</button><button class="btn warn" onclick="delOrg('${k}')">Delete</button></div>`).join('')||'<p class="muted">No organisers.</p>'}</div>
+<div class="card"><h2>📜 Organiser Live Log</h2>${orgLogs.map(l=>`<div class="item small"><b>${esc(l.organiser)}</b> • ${esc(l.action)}<br><span class="muted">${esc(l.created)}</span></div>`).join('')||'<p class="muted">No activity.</p>'}</div>`}
+async function addOrg(){let u=$('ou').value.trim(),p=$('op').value;if(!u||p.length<6){toast('Username + 6+ char password');return}
+ await db.ref(ORG+'/'+okey(u)).set({username:u,passHash:await sha(p),active:true,created:new Date().toLocaleString()});toast('Organiser created')}
+function toggleOrg(k,a){db.ref(ORG+'/'+k+'/active').set(a)}
+function delOrg(k){if(confirm('Delete?'))db.ref(ORG+'/'+k).remove()}
 init();
 </script></body></html>

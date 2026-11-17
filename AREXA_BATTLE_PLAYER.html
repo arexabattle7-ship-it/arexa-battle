@@ -70,13 +70,13 @@ function normalize(d){
 let data = normalize(null);
 let cloudReady = false, loaded = false, busy = false;
 let tab = 'home', selCat = '', selSlot = '', selTour = null, filtCat = '', authMode = 'login';
-try{if(localStorage.getItem('arexa_ref'))authMode='signup'}catch(e){}
+
 // Optional: apne khud ke photo lagane ke liye  'CATEGORY|Mode' : 'https://photo-link.jpg'
 const MODE_IMG = {};
 let editProf = false, pickAv = '', pendingRender = false, presenceFor = '';
 
 try{let cc=JSON.parse(localStorage.getItem(STORE)||'null');if(cc)data=normalize(cc)}catch(e){}
-try{let q=new URLSearchParams(location.search).get('ref');if(q)localStorage.setItem('arexa_ref',q.slice(0,40))}catch(e){}
+
 
 function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch(e){return null}}
 function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
@@ -205,7 +205,6 @@ function sortedPlayers(){
 function openSlot(i){let t=(window._tiles||[])[i];if(!t)return;selCat=t.cat;selSlot=t.mode;render()}
 function setAuth(m){authMode=m;render()}
 function loginView(){
-  let ref=''; try{ref=localStorage.getItem('arexa_ref')||''}catch(e){}
   let tabBtn=(m,l)=>`<button onclick="setAuth('${m}')" style="border:0;border-radius:9px;padding:11px 4px;font-weight:900;font-size:13px;cursor:pointer;${authMode===m?'background:linear-gradient(90deg,#ffe34b,#ffb800);color:#211500':'background:none;color:#d9c8ec'}">${l}</button>`;
   return (cloudReady?'':`<div class="notice">⚠️ Server se connect nahi ho pa raha.<br><b>Reason:</b> ${esc(netErr||'Connecting...')}<br>Check your internet, then tap Retry.<button class="btn alt" onclick="location.reload()">🔄 Retry</button></div>`)+`
     <div class="card">
@@ -218,13 +217,8 @@ function loginView(){
       :`
         <div class="field"><label>Username</label><input id="nu" maxlength="24" placeholder="Choose username" autocapitalize="off"></div>
         <div class="field"><label>Password (8+ chars)</label><input id="np" type="password" placeholder="Choose password"></div>
-        <div class="field"><label>🎁 Refer ID (optional)</label><input id="nr" maxlength="40" placeholder="Friend's Refer ID" value="${esc(ref)}" autocapitalize="off"></div>
         <button class="btn" onclick="signup()">Create Account</button>
         <p class="small muted" style="text-align:center;margin:12px 0 0">Already have an account? <a href="#" onclick="setAuth('login');return false" style="color:#ffdc45">Login</a></p>`}
-    </div>
-    <div class="card"><b>👥 Invite Friends</b>
-      <p class="small muted">Share AREXA BATTLE with your friends and play together.</p>
-      <button class="btn alt" onclick="shareApp()">📲 Share App</button>
     </div>`;
 }
 
@@ -269,4 +263,13 @@ function profileView(c){
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0">
         <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins</div><div class="stat" style="font-size:16px">🪙${Number(c.demoCoins||0)}</div></div>
         <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Points</div><div class="stat" style="font-size:16px">${Number(c.points||0)}</div></div>
-        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Rank</div><div class="stat" style="font-size:16px">${rank?'
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Rank</div><div class="stat" style="font-size:16px">${rank?'#'+rank:'-'}</div></div>
+      </div>
+      ${infoRow('Full Name',c.fullName)}${infoRow('Game Name',c.gameName)}${infoRow('Game UID',c.gameUid)}${infoRow('Mobile',c.phone)}${infoRow('Email',c.email)}${infoRow('UPI ID',c.upi?(c.upi+' • '+(c.upiStatus==='Approved'?'✅ Approved':c.upiStatus==='Rejected'?'❌ Rejected':'⏳ Pending')):'')}
+      <button class="btn" onclick="startEdit()">✏️ Edit Profile</button>
+    </div>
+    <div class="card"><button class="btn alt" style="margin-top:0" onclick="logout()">Logout</button></div>`;
+}
+
+function editView(c){
+  let inp=(id,label,val,ph,extra)=>`<div class="field"><label>${label}</label><input id="${id}" value="

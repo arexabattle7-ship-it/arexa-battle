@@ -116,8 +116,12 @@ document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{if(!t
 
 // Live connection with Firebase (admin / organiser changes show instantly)
 async function init(){
+  // Show app immediately with local/cached data — no waiting
+  loaded=true;
+  render();
+
   let first=true;
-  if(!(await ensureFirebase())){netErr=netErr||'Firebase library load nahi hui (CDN block ya APK mein INTERNET permission missing)';toast('Offline mode');loaded=true;render();return}
+  if(!(await ensureFirebase())){netErr=netErr||'Firebase library load nahi hui (CDN block ya APK mein INTERNET permission missing)';toast('Offline mode');return}
   await new Promise(res=>{
     let t=setTimeout(()=>{netErr='Server se 8 sec mein response nahi aaya (slow internet ya Firebase URL/rules issue)';toast('Offline mode');res()},8000);
     try{
@@ -125,12 +129,10 @@ async function init(){
         cloudReady=true;
         if(snap.exists()){data=normalize(snap.val());saveLocal()}
         if(first){first=false;clearTimeout(t);toast('Connected ✓');res()}
-        if(loaded)softRender();
+        softRender();
       },err=>{console.error(err);netErr='Database error: '+(err&&err.code?err.code:err&&err.message?err.message:'unknown')+' (Firebase Rules check karo)';clearTimeout(t);res()});
     }catch(e){console.error(e);netErr='Error: '+(e&&e.message?e.message:e);clearTimeout(t);res()}
   });
-  loaded=true;
-  render();
   startPresence();
 }
 
@@ -267,5 +269,4 @@ function profileView(c){
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0">
         <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins</div><div class="stat" style="font-size:16px">🪙${Number(c.demoCoins||0)}</div></div>
         <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Points</div><div class="stat" style="font-size:16px">${Number(c.points||0)}</div></div>
-        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Rank</div><div class="stat" style="font-size:16px">${rank?'#'+rank:'-'}</div></div>
-      <
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Rank</div><div class="stat" style="font-size:16px">${rank?'

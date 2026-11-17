@@ -1,0 +1,577 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AREXA BATTLE Player</title><style>
+*{box-sizing:border-box}body{margin:0;background:#080512;color:#fff;font-family:Arial,sans-serif}.wrap{max-width:430px;min-height:100vh;margin:auto;background:linear-gradient(180deg,#100821,#09051b);padding:0 0 78px}.top{position:sticky;top:0;z-index:10;background:#100821f5;border-bottom:1px solid #69319a;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:900;font-size:20px;letter-spacing:1px}.brand span{color:#ffd52e}.sub{font-size:10px;color:#b9a9d0;letter-spacing:1px;margin-top:3px}#app{padding:14px}.card{border:1px solid #9a39d4;border-radius:16px;background:linear-gradient(145deg,#21113d,#10091f);padding:16px;margin:12px 0}.btn{border:0;border-radius:10px;padding:13px 15px;background:linear-gradient(90deg,#ffe34b,#ffb800);color:#211500;font-size:14px;font-weight:900;cursor:pointer;width:100%;margin-top:8px}.btn.alt{background:#24133e;color:white;border:1px solid #8f45bd}.field{margin:10px 0}label{display:block;color:#d9c8ec;font-size:12px;margin-bottom:6px}input{width:100%;padding:12px;border-radius:10px;border:1px solid #63417f;background:#10091f;color:white;font:inherit;box-sizing:border-box}.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#261440;border:1px solid #a333ff;border-radius:10px;padding:11px 14px;display:none;max-width:90%;z-index:12;text-align:center;font-size:12px}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#100821f5;border-top:1px solid #69319a;padding:9px 2px;z-index:8}.nav button{border:0;background:none;color:#c1b4d2;font-size:10px;padding:2px}.nav button .ico{display:block;font-size:17px;margin-bottom:4px}.nav button.active{color:#e34cff}.hero{border:1px solid #a333ff;border-radius:17px;padding:18px;background:linear-gradient(110deg,#1b083b,#34104b 65%,#5b1a69);margin:4px 0 16px}.stat{font-size:22px;font-weight:900;color:#ffdc45}.tag{display:inline-block;color:#ffdc45;border:1px solid #9b7628;border-radius:18px;padding:4px 8px;font-size:10px}.item{padding:12px 0;border-bottom:1px solid #49315f}.item:last-child{border:0}.muted{color:#c4b6d8}.small{font-size:12px}.notice{border:1px solid #665327;background:#241e11;color:#f7d98b;padding:12px;border-radius:12px;font-size:12px;line-height:1.5;margin-top:14px}
+</style></head><body>
+<div class="wrap">
+<header class="top"><div><div class="brand">AREXA <span>BATTLE</span></div><div class="sub">PLAYER ARENA</div></div></header>
+<div id="app"><p style="color:#ccc;padding:20px">Loading...</p></div>
+<div id="toast" class="toast"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+// Firebase Init
+const FB = {
+  apiKey:"AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",
+  authDomain:"arexabattle-75a47.firebaseapp.com",
+  databaseURL:"https://arexabattle-75a47-default-rtdb.firebaseio.com",
+  projectId:"arexabattle-75a47",
+  storageBucket:"arexabattle-75a47.firebasestorage.app",
+  messagingSenderId:"1028204149228",
+  appId:"1:1028204149228:web:594d12f5e50c3c1bcc68c9"
+};
+let db = null, netErr = '';
+function loadScript(src){return new Promise(res=>{let t=document.createElement('script');t.src=src;t.onload=()=>res(true);t.onerror=()=>res(false);document.head.appendChild(t)})}
+async function ensureFirebase(){
+  try{
+    if(typeof firebase==='undefined'||!firebase.database){
+      const SRC=[
+        ['https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js','https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js'],
+        ['https://unpkg.com/firebase@10.14.1/firebase-app-compat.js','https://unpkg.com/firebase@10.14.1/firebase-database-compat.js'],
+        ['https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js']
+      ];
+      for(const pair of SRC){
+        if(typeof firebase!=='undefined'&&firebase.database)break;
+        if(await loadScript(pair[0]))await loadScript(pair[1]);
+      }
+    }
+    if(typeof firebase==='undefined'||!firebase.database)return false;
+    if(!firebase.apps.length)firebase.initializeApp(FB);
+    db=firebase.database();
+    return true;
+  }catch(e){console.error(e);netErr='Error: '+(e&&e.message?e.message:e);return false}
+}
+const CLOUD = 'arexaBattle/sharedData';
+const STORE = 'arexa_battle_data';
+const SKEY = 'arexa_player_session';
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
+async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+
+// ====== SETTINGS ======
+const APK_LINK = '';      // 👈 Yahan apna direct APK download link paste karo (https://....apk)
+const REF_BONUS = 5;      // Referral coins (referrer ko milte hain)
+const UPI_RE = /^[\w.\-]{2,}@[a-zA-Z]{2,}$/;
+const AVATARS = ['🎮','🐺','🦁','🐯','🔥','⚡','👑','💀','🦅','🐉','🥷','🤖'];
+
+function arr(x){return Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[])}
+function normalize(d){
+  d=d||{};
+  let o=Object.assign({},d);
+  o.admin=d.admin||{username:'AREXAADMIN',passHash:''};
+  ['players','tournaments','withdrawals','depositRequests','coinRequests','transactions'].forEach(k=>{o[k]=arr(d[k]).filter(x=>x&&typeof x==='object')});
+  o.paymentSettings=d.paymentSettings||{};
+  o.tournaments.forEach(t=>{t.players=arr(t.players)});
+  return o;
+}
+
+let data = normalize(null);
+let cloudReady = false, loaded = false, busy = false;
+let tab = 'home', selCat = '', selSlot = '', selTour = null, filtCat = '', authMode = 'login';
+
+// Optional: apne khud ke photo lagane ke liye  'CATEGORY|Mode' : 'https://photo-link.jpg'
+const MODE_IMG = {};
+let editProf = false, pickAv = '', pendingRender = false, presenceFor = '';
+
+try{let cc=JSON.parse(localStorage.getItem(STORE)||'null');if(cc)data=normalize(cc)}catch(e){}
+
+
+function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch(e){return null}}
+function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
+function logout(){localStorage.removeItem(SKEY);location.reload()}
+function me(){let s=session();if(!s)return null;return data.players.find(x=>x.username===s.username)||null}
+function saveLocal(){try{localStorage.setItem(STORE,JSON.stringify(data))}catch(e){}}
+function isBlocked(p){return !!p&&(p.banned===true||p.blocked===true||p.status==='Banned'||p.status==='Blocked'||p.status==='banned'||p.status==='blocked')}
+
+// Safe live save: always applies change on the LATEST server data (no overwriting admin/organiser changes)
+function mutate(fn){
+  return new Promise(resolve=>{
+    if(!cloudReady||!db){resolve({err:'No internet connection. Please try again.'});return}
+    if(busy){resolve({err:'Please wait...'});return}
+    busy=true;
+    let out=null, done=false;
+    let finish=r=>{if(done)return;done=true;busy=false;resolve(r)};
+    let timer=setTimeout(()=>finish({err:'Slow connection. Check your wallet before retrying.'}),12000);
+    db.ref(CLOUD).transaction(cur=>{
+      out=null;
+      let d=normalize(cur||JSON.parse(JSON.stringify(data)));
+      let r;
+      try{r=fn(d)||{}}catch(e){console.error(e);out={err:'Something went wrong'};return}
+      if(r.err){out=r;return}
+      out=r;return d;
+    },(err,committed,snap)=>{
+      clearTimeout(timer);
+      if(err){console.error(err);finish({err:'Save failed. Try again.'});return}
+      if(!committed){finish(out&&out.err?out:{err:'Please try again'});return}
+      data=normalize(snap.val());saveLocal();finish(out||{ok:true});
+    },false);
+  });
+}
+
+function typing(){let a=document.activeElement;return !!a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')}
+function softRender(){if(typing()||editProf){pendingRender=true}else render()}
+document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{if(!typing()&&!editProf){pendingRender=false;render()}},250)});
+
+// Live connection with Firebase (admin / organiser changes show instantly)
+async function init(){
+  // Show app immediately with local/cached data — no waiting
+  loaded=true;
+  render();
+
+  let first=true;
+  if(!(await ensureFirebase())){netErr=netErr||'Firebase library load nahi hui (CDN block ya APK mein INTERNET permission missing)';toast('Offline mode');return}
+  await new Promise(res=>{
+    let t=setTimeout(()=>{netErr='Server se 8 sec mein response nahi aaya (slow internet ya Firebase URL/rules issue)';toast('Offline mode');res()},8000);
+    try{
+      db.ref(CLOUD).on('value',snap=>{
+        cloudReady=true;
+        if(snap.exists()){data=normalize(snap.val());saveLocal()}
+        if(first){first=false;clearTimeout(t);toast('Connected ✓');res()}
+        softRender();
+      },err=>{console.error(err);netErr='Database error: '+(err&&err.code?err.code:err&&err.message?err.message:'unknown')+' (Firebase Rules check karo)';clearTimeout(t);res()});
+    }catch(e){console.error(e);netErr='Error: '+(e&&e.message?e.message:e);clearTimeout(t);res()}
+  });
+  startPresence();
+}
+
+function startPresence(){
+  try{
+    let s=session();if(!s||!db||presenceFor===s.username)return;
+    presenceFor=s.username;
+    let ref=db.ref('arexaBattle/presence/'+s.username.replace(/[.#$\[\]\/]/g,'_'));
+    let TS=firebase.database.ServerValue.TIMESTAMP;
+    db.ref('.info/connected').on('value',sn=>{
+      if(sn.val()===true){
+        ref.onDisconnect().set({username:s.username,online:false,lastSeen:TS}).catch(()=>{});
+        ref.set({username:s.username,online:true,lastSeen:TS}).catch(()=>{});
+      }
+    });
+  }catch(e){}
+}
+
+// ====== Sharing / referral helpers ======
+function appLink(code){
+  if(APK_LINK)return APK_LINK;
+  let ps=data.paymentSettings||{};
+  return ps.apkLink?String(ps.apkLink):'';
+}
+function shareText(code){
+  let l=appLink(code);
+  return '🎮 AREXA BATTLE — play tournaments & win coins!\n'+(l?'📲 Download the app: '+l+'\n':'')+(code?'🎁 Refer ID: '+code+'\n(Account banate time ye Refer ID daalo)':'');
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}catch(e){
+    try{let a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();let ok=document.execCommand('copy');a.remove();return ok}catch(_){return false}
+  }
+}
+function inviteText(){let c=me();return shareText(c?c.username:'')}
+async function shareApp(){
+  let text=inviteText();
+  try{if(navigator.share){await navigator.share({title:'AREXA BATTLE',text});return}}catch(e){if(e&&e.name==='AbortError')return}
+  showInvite();
+}
+function showInvite(){
+  closeInvite();
+  let text=inviteText();
+  let o=document.createElement('div');
+  o.id='invbox';
+  o.style.cssText='position:fixed;inset:0;background:#000b;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.innerHTML=`<div class="card" style="width:100%;max-width:400px;margin:0">
+    <b>📲 Invite Friends</b>
+    <p class="small muted">Ye message copy karke WhatsApp / kisi bhi app mein bhejo. Isme app link aur tumhara Refer ID hai.</p>
+    <textarea id="invtxt" readonly style="width:100%;min-height:130px;padding:10px;border-radius:10px;border:1px solid #63417f;background:#10091f;color:#fff;font:inherit;font-size:13px">${esc(text)}</textarea>
+    <button class="btn" onclick="copyInvite()">📋 Copy Invite</button>
+    <a class="btn alt" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">💬 Open WhatsApp</a>
+    <button class="btn alt" onclick="closeInvite()">Close</button>
+  </div>`;
+  document.body.appendChild(o);
+  try{let t=$('invtxt');t.focus();t.select()}catch(e){}
+}
+function closeInvite(){let o=$('invbox');if(o)o.remove()}
+async function copyInvite(){
+  let t=$('invtxt'), ok=await copyText(inviteText());
+  if(!ok&&t){try{t.focus();t.select();t.setSelectionRange(0,99999);ok=document.execCommand('copy')}catch(e){}}
+  toast(ok?'Invite copied ✓ ab paste karke bhejo':'Text select ho gaya - Copy dabao');
+}
+function shareWA(){showInvite()}
+async function copyCode(){let c=me();if(!c)return;if(await copyText(c.username))toast('Refer ID copied ✓');else showInvite()}
+
+function sortedPlayers(){
+  return data.players.filter(p=>!isBlocked(p)).sort((a,b)=>(Number(b.demoCoins)||0)-(Number(a.demoCoins)||0)||(Number(b.points)||0)-(Number(a.points)||0)||String(a.username).localeCompare(String(b.username)));
+}
+
+function openSlot(i){let t=(window._tiles||[])[i];if(!t)return;selCat=t.cat;selSlot=t.mode;render()}
+function setAuth(m){authMode=m;render()}
+function loginView(){
+  let tabBtn=(m,l)=>`<button onclick="setAuth('${m}')" style="border:0;border-radius:9px;padding:11px 4px;font-weight:900;font-size:13px;cursor:pointer;${authMode===m?'background:linear-gradient(90deg,#ffe34b,#ffb800);color:#211500':'background:none;color:#d9c8ec'}">${l}</button>`;
+  return (cloudReady?'':`<div class="notice">⚠️ Server se connect nahi ho pa raha.<br><b>Reason:</b> ${esc(netErr||'Connecting...')}<br>Check your internet, then tap Retry.<button class="btn alt" onclick="location.reload()">🔄 Retry</button></div>`)+`
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#10091f;border-radius:12px;padding:4px;margin-bottom:14px">${tabBtn('login','🎮 Login')}${tabBtn('signup','✨ Create Account')}</div>
+      ${authMode==='login'?`
+        <div class="field"><label>Username</label><input id="lu" placeholder="Your username" autocapitalize="off"></div>
+        <div class="field"><label>Password</label><input id="lp" type="password" placeholder="Password"></div>
+        <button class="btn" onclick="doLogin()">Login</button>
+        <p class="small muted" style="text-align:center;margin:12px 0 0">New player? <a href="#" onclick="setAuth('signup');return false" style="color:#ffdc45">Create account</a></p>`
+      :`
+        <div class="field"><label>Username</label><input id="nu" maxlength="24" placeholder="Choose username" autocapitalize="off"></div>
+        <div class="field"><label>Password (8+ chars)</label><input id="np" type="password" placeholder="Choose password"></div>
+        <button class="btn" onclick="signup()">Create Account</button>
+        <p class="small muted" style="text-align:center;margin:12px 0 0">Already have an account? <a href="#" onclick="setAuth('login');return false" style="color:#ffdc45">Login</a></p>`}
+    </div>`;
+}
+
+function miniRefer(){
+  let c=me();
+  return `<div class="card"><b>🎁 Refer & Earn</b>
+    <p class="small muted">Invite friends and get <b style="color:#ffdc45">${REF_BONUS} coins</b> every time a friend signs up with your Refer ID.</p>
+    ${c?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#281743;border:1px dashed #a333ff;border-radius:10px;padding:10px 12px;margin:8px 0"><div><div class="small muted">YOUR REFER ID</div><b style="font-size:18px;letter-spacing:1px;word-break:break-all">${esc(c.username)}</b></div><button onclick="copyCode()" style="border:1px solid #8f45bd;background:#24133e;color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">Copy</button></div>`:''}
+    <button class="btn" onclick="shareApp()">📲 Share with Friends</button>
+  </div>`;
+}
+
+function referCard(c){
+  let friends=data.players.filter(p=>p.referredBy===c.username);
+  return `<div class="card">
+    <b>🎁 Refer & Earn</b>
+    <p class="small muted">Invite friends to AREXA BATTLE. You get <b style="color:#ffdc45">${REF_BONUS} coins</b> each time a friend creates an account with your Refer ID.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#281743;border:1px dashed #a333ff;border-radius:10px;padding:10px 12px;margin:8px 0">
+      <div><div class="small muted">YOUR REFER ID</div><b style="font-size:18px;letter-spacing:1px;word-break:break-all">${esc(c.username)}</b></div>
+      <button onclick="copyCode()" style="border:1px solid #8f45bd;background:#24133e;color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">Copy</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">
+      <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Friends Joined</div><div class="stat" style="font-size:18px">${friends.length}</div></div>
+      <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins Earned</div><div class="stat" style="font-size:18px">🪙${Number(c.refEarned||0)}</div></div>
+    </div>
+    ${appLink('')?`<div class="small muted" style="word-break:break-all;margin:6px 0">📲 App link: <span style="color:#ffdc45">${esc(appLink(''))}</span></div>`:`<div class="notice" style="margin:8px 0">⚠️ APK link set nahi hai, isliye abhi sirf code share hoga.</div>`}
+    <button class="btn" onclick="shareApp()">📲 Share with Friends</button>
+    <button class="btn alt" onclick="shareWA()">💬 WhatsApp / Copy Invite</button>
+    <button class="btn alt" onclick="copyLink()">🔗 Copy App Link</button>
+    ${friends.length?`<div style="margin-top:10px"><div class="small muted">Friends you referred</div>${friends.slice(-10).reverse().map(f=>`<div class="item small" style="display:flex;justify-content:space-between"><span>${esc(f.avatar||'🎮')} ${esc(f.username)}</span><span class="tag">+${REF_BONUS} 🪙</span></div>`).join('')}</div>`:''}
+  </div>`;
+}
+
+function infoRow(l,v){return `<div class="item small" style="display:flex;justify-content:space-between;gap:10px"><span class="muted">${l}</span><b style="text-align:right;word-break:break-all">${v?esc(v):'—'}</b></div>`}
+
+function profileView(c){
+  let list=sortedPlayers(), rank=list.findIndex(x=>x.username===c.username)+1;
+  return `<div class="card">
+      <div style="font-size:46px;text-align:center">${esc(c.avatar||'🎮')}</div>
+      <h2 style="text-align:center;margin:8px 0 2px">${esc(c.fullName||c.username)}</h2>
+      <p class="small muted" style="text-align:center;margin:0">@${esc(c.username)}${c.gameName?' · '+esc(c.gameName):''}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0">
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins</div><div class="stat" style="font-size:16px">🪙${Number(c.demoCoins||0)}</div></div>
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Points</div><div class="stat" style="font-size:16px">${Number(c.points||0)}</div></div>
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Rank</div><div class="stat" style="font-size:16px">${rank?'#'+rank:'-'}</div></div>
+      </div>
+      ${infoRow('Full Name',c.fullName)}${infoRow('Game Name',c.gameName)}${infoRow('Game UID',c.gameUid)}${infoRow('Mobile',c.phone)}${infoRow('Email',c.email)}${infoRow('UPI ID',c.upi?(c.upi+' • '+(c.upiStatus==='Approved'?'✅ Approved':c.upiStatus==='Rejected'?'❌ Rejected':'⏳ Pending')):'')}
+      <button class="btn" onclick="startEdit()">✏️ Edit Profile</button>
+    </div>
+    <div class="card"><button class="btn alt" style="margin-top:0" onclick="logout()">Logout</button></div>`;
+}
+
+function editView(c){
+  let inp=(id,label,val,ph,extra)=>`<div class="field"><label>${label}</label><input id="${id}" value="${esc(val||'')}" placeholder="${ph}" ${extra||''}></div>`;
+  return `<button onclick="editProf=false;render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back</button>
+    <div class="card"><b>✏️ Edit Profile</b>
+      <div class="field"><label>Choose Avatar</label>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+          ${AVATARS.map(a=>`<button class="avb" data-a="${a}" onclick="setAv(this)" style="font-size:22px;padding:6px 0;border-radius:10px;background:#10091f;cursor:pointer;border:2px solid ${a===pickAv?'#ffd52e':'#63417f'}">${a}</button>`).join('')}
+        </div>
+      </div>
+      ${inp('pf_name','Full Name',c.fullName,'Your name','maxlength="40"')}
+      ${inp('pf_game','In-Game Name',c.gameName,'Your game name','maxlength="30"')}
+      ${inp('pf_uid','Game UID',c.gameUid,'Your game UID','maxlength="20" inputmode="numeric"')}
+      ${inp('pf_phone','Mobile Number',c.phone,'10 digit number','maxlength="14" inputmode="tel"')}
+      ${inp('pf_email','Email',c.email,'you@example.com','maxlength="60" autocapitalize="off"')}
+      ${inp('pf_upi','UPI ID (for withdrawals)',c.upi,'example@upi','maxlength="60" autocapitalize="off"')}
+      <button class="btn" onclick="saveProfile()">Save Profile</button>
+    </div>
+    <div class="card"><b>🔒 Change Password</b>
+      <div class="field"><label>Current Password</label><input id="pw_old" type="password"></div>
+      <div class="field"><label>New Password (8+ chars)</label><input id="pw_new" type="password"></div>
+      <button class="btn alt" onclick="changePw()">Update Password</button>
+    </div>`;
+}
+
+function render(){
+  let root=$('app'), s=session(), c=me();
+  if(!loaded){root.innerHTML='<p style="color:#ccc;padding:20px">Loading...</p>';return}
+  if(!s||!c){root.innerHTML=loginView();return}
+  if(isBlocked(c)){
+    root.innerHTML=`<div class="card"><h2 style="margin:0 0 10px">🚫 Account Blocked</h2><p class="muted small">Your account has been blocked by the admin/organiser. Please contact support.</p><button class="btn alt" onclick="logout()">Logout</button></div>`;
+    return;
+  }
+  startPresence();
+
+  let navHtml = `<nav class="nav">
+    <button class="${tab==='home'?'active':''}" onclick="tab='home';render()"><span class="ico">⌂</span>Home</button>
+    <button class="${tab==='tour'?'active':''}" onclick="tab='tour';render()"><span class="ico">🏆</span>Tournaments</button>
+    <button class="${tab==='wallet'?'active':''}" onclick="tab='wallet';render()"><span class="ico">🪙</span>Wallet</button>
+    <button class="${tab==='lb'?'active':''}" onclick="tab='lb';render()"><span class="ico">📊</span>Leaderboard</button>
+    <button class="${tab==='acc'?'active':''}" onclick="tab='acc';render()"><span class="ico">👤</span>Account</button>
+  </nav>`;
+  
+  let body = '';
+  
+  if(tab==='home'){
+    let open = data.tournaments.filter(t=>t.status==='Open');
+    body = `
+      <div class="hero">
+        <div class="small muted">WELCOME BACK</div>
+        <strong style="font-size:22px">${esc(c.username)}</strong>
+        <div style="margin-top:8px">🪙 <b>${Number(c.demoCoins||0).toLocaleString('en-IN')} Coins</b></div>
+      </div>
+      <div class="card">
+        <b>🏆 Open Tournaments: ${open.length}</b>
+        <p class="small muted">Join a tournament from the Tournaments tab.</p>
+        <button class="btn" onclick="tab='tour';render()">View Tournaments</button>
+      </div>`;
+  }
+  
+  else if(tab==='tour'){
+    let open = data.tournaments.filter(t=>t.status==='Open');
+    let joined = data.tournaments.filter(t=>(t.players||[]).includes(c.username));
+    const CATS = ['BR RANK','CS CUSTOM','LONE WOLF'];
+    const SLOTS = {
+      'BR RANK':['BR Per Kill','BR Survival','BR Solo Rank','BR Duo Rank','BR Squad Rank'],
+      'CS CUSTOM':['1v1 Custom','2v2 Custom','4v4 Custom','1v1 Headshot Only','2v2 Headshot Only','4v4 Headshot Only','UMP Only','One Tap Only','10Rs Custom'],
+      'LONE WOLF':['1v1 Headshot Only','2v2 Headshot Only','10Rs']
+    };
+    const LABELS = {
+      'BR RANK|BR Per Kill':'PER KILL','BR RANK|BR Survival':'SURVIVAL','BR RANK|BR Solo Rank':'SOLO RANK','BR RANK|BR Duo Rank':'DUO RANK','BR RANK|BR Squad Rank':'SQUAD RANK',
+      'CS CUSTOM|1v1 Custom':'CS 1 VS 1','CS CUSTOM|2v2 Custom':'CS 2 VS 2','CS CUSTOM|4v4 Custom':'CS 4 VS 4',
+      'CS CUSTOM|1v1 Headshot Only':'CS 1 VS 1 HEAD','CS CUSTOM|2v2 Headshot Only':'CS 2 VS 2 HEAD','CS CUSTOM|4v4 Headshot Only':'CS 4 VS 4 HEAD',
+      'CS CUSTOM|UMP Only':'UMP ONLY','CS CUSTOM|One Tap Only':'ONE TAP ONLY','CS CUSTOM|10Rs Custom':'CS 10Rs',
+      'LONE WOLF|1v1 Headshot Only':'LW 1 VS 1','LONE WOLF|2v2 Headshot Only':'LW 2 VS 2','LONE WOLF|10Rs':'LW 10Rs'
+    };
+    const slotLabel=(cat,mode)=>LABELS[cat+'|'+mode]||String(mode||'').toUpperCase();
+    const ART=['🧑‍🎤','🥷','🦊','🐺','👹','🤡','🐰','💀','🔥','🦅','🐉','🤖'];
+    const HUES=[285,350,20,200,150,320,45,260];
+    const hash=str=>{let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;return h};
+
+    if(selTour!==null){
+      let t = open.find(x=>x.id===selTour);
+      if(!t){selTour=null;render();return}
+      let isJoined=(t.players||[]).includes(c.username);
+      body=`<button onclick="selTour=null;render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back</button>
+        <div class="card">
+          <b style="font-size:18px">${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
+          <p class="small muted">Mode: ${esc(t.mode||'')} • Entry: ${Number(t.entryFee||0)} Coins</p>
+          <p class="small muted">Players: ${(t.players||[]).length}/${t.maxPlayers||0} • Prize: ${esc(t.prize||'Not set')}</p>
+          <p class="small muted">Start: ${esc(t.date||'')}</p>
+          ${isJoined?`<div class="notice">🔐 <b>Room Details</b><br>Room ID: ${t.roomId?esc(t.roomId):'Not added yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not added yet'}</div>`:'<p class="small muted">Join to see Room ID and Password.</p>'}
+          <button class="btn ${isJoined?'alt':''}" onclick="joinT(${t.id})" ${isJoined||(t.players||[]).length>=(t.maxPlayers||0)?'disabled':''}>${isJoined?'✓ Already Joined':(t.players||[]).length>=(t.maxPlayers||0)?'Slots Full':'Join Tournament'}</button>
+        </div>`;
+    }
+    else if(!selSlot){
+      let tiles=[];
+      CATS.forEach(cat=>SLOTS[cat].forEach(m=>tiles.push({cat,mode:m})));
+      open.forEach(t=>{if(t.category&&t.mode&&!tiles.some(x=>x.cat===t.category&&x.mode===t.mode))tiles.push({cat:t.category,mode:t.mode})});
+      let shown=tiles.filter(x=>!filtCat||x.cat===filtCat);
+      window._tiles=shown;
+      const chip=(v,l)=>`<button onclick="filtCat='${v}';render()" style="flex:0 0 auto;border:1px solid ${filtCat===v?'#ffd52e':'#63417f'};background:${filtCat===v?'#3a2a10':'#10091f'};color:${filtCat===v?'#ffdc45':'#d9c8ec'};border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">${l}</button>`;
+      const tile=(x,i)=>{
+        let m=open.filter(t=>t.category===x.cat&&t.mode===x.mode);
+        let cnt=m.reduce((n,t)=>n+(t.players||[]).length,0);
+        let key=x.cat+'|'+x.mode, h=hash(key), hue=HUES[h%HUES.length], em=ART[h%ART.length];
+        let art=MODE_IMG[key]?`<img src="${esc(MODE_IMG[key])}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`
+          :`<div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,hsl(${hue} 70% 32%),#0b0618 75%)"></div>
+            <div style="position:absolute;left:50%;top:38%;width:74%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:6px solid #d9a31c;border-right-color:transparent;border-bottom-color:#7a5410;box-shadow:0 0 18px #ffb80055"></div>
+            <div style="position:absolute;left:0;right:0;top:38%;transform:translateY(-50%);text-align:center;font-size:46px;filter:drop-shadow(0 4px 6px #000)">${em}</div>`;
+        return `<button onclick="openSlot(${i})" style="position:relative;aspect-ratio:3/4;border:1px solid #5b2a85;border-radius:14px;overflow:hidden;background:#0b0618;cursor:pointer;padding:0;color:#fff">
+          ${art}
+          <span style="position:absolute;top:7px;right:7px;background:#000a;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px"><i style="width:7px;height:7px;border-radius:50%;background:${m.length?'#2ee66b':'#ff3b4e'};display:inline-block"></i>${cnt}</span>
+          <span style="position:absolute;left:0;right:0;bottom:0;padding:22px 8px 9px;background:linear-gradient(transparent,#000d);font-weight:900;font-size:12px;text-align:left;line-height:1.2">${esc(slotLabel(x.cat,x.mode))}</span>
+        </button>`;
+      };
+      body=`<h2 style="margin:4px 0 6px">🏆 Tournaments</h2>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px">${chip('','All')}${CATS.map(cn=>chip(cn,cn)).join('')}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">${shown.map(tile).join('')}</div>
+        <h2>My Registrations</h2>
+        ${joined.map(t=>`<div class="card"><b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
+          ${(t.status==='Open'||t.status==='Live')?`<div class="notice">🔐 Room ID: ${t.roomId?esc(t.roomId):'Not set yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not set yet'}</div>`:''}
+        </div>`).join('')||'<div class="card"><p class="muted">No registrations yet.</p></div>'}`;
+    }
+    else{
+      let matches = open.filter(t=>t.category===selCat&&t.mode===selSlot);
+      body=`<button onclick="selSlot='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back</button>
+        <h2>${esc(slotLabel(selCat,selSlot))} <span class="small muted">· ${esc(selCat)}</span></h2>
+        ${matches.map(t=>`<div class="card">
+          <b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
+          <p class="small muted">Entry: ${Number(t.entryFee||0)} Coins • Players: ${(t.players||[]).length}/${t.maxPlayers||0}</p>
+          <p class="small muted">Prize: ${esc(t.prize||'Not set')} • Start: ${esc(t.date||'')}</p>
+          <button class="btn" onclick="selTour=${t.id};render()">View & Join ›</button>
+        </div>`).join('')||'<div class="card"><p class="muted">No tournaments in this slot yet.</p></div>'}`;
+    }
+  }
+  
+  else if(tab==='wallet'){
+    let pay = data.paymentSettings||{};
+    let myW = (data.withdrawals||[]).filter(w=>w.username===c.username).reverse();
+    let myD = (data.depositRequests||[]).filter(r=>r.username===c.username).reverse();
+    body = `
+      <div class="card">
+        <div class="small muted">COIN BALANCE</div>
+        <div class="stat">🪙 ${Number(c.demoCoins||0).toLocaleString('en-IN')}</div>
+      </div>
+      <div class="card">
+        <b>💳 Add Coins</b>
+        ${pay.qrData?`<div style="text-align:center;padding:10px"><img src="${pay.qrData}" style="width:200px;border-radius:12px;background:white;padding:8px"></div>`:'<p class="small muted">Payment QR not set yet.</p>'}
+        ${pay.upiId?`<p>UPI: <b style="color:#ffdc45">${esc(pay.upiId)}</b></p>`:''}
+        <div class="field"><label>Amount (₹ min 50)</label><input id="da" type="number" min="50" placeholder="50"></div>
+        <div class="field"><label>UTR / Transaction ID</label><input id="du" placeholder="Transaction reference"></div>
+        <button class="btn" onclick="deposit()">Submit Deposit</button>
+      </div>
+      <div class="card">
+        <b>💸 Withdraw Coins</b>
+        <div class="field"><label>Coins (min 50)</label><input id="wa" type="number" min="50" placeholder="50"></div>
+        <div class="field"><label>Your UPI ID</label><input id="wu" value="${esc(c.upi||'')}" placeholder="example@upi" autocapitalize="off" autocomplete="off"></div>
+        <button class="btn alt" onclick="withdraw()">Withdraw</button>
+      </div>
+      <div class="card"><b>Deposit History</b>${myD.map(r=>`<div class="item small">₹${r.amount} · <span class="tag">${esc(r.status)}</span> · ${esc(r.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>
+      <div class="card"><b>Withdrawal History</b>${myW.map(w=>`<div class="item small">🪙${w.coins} · ${esc(w.upi||'')} · <span class="tag">${esc(w.status)}</span> · ${esc(w.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>`;
+  }
+  
+  else if(tab==='lb'){
+    let list=sortedPlayers(), myRank=list.findIndex(x=>x.username===c.username)+1;
+    const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    const row=(p,i)=>`<div class="item" style="display:flex;align-items:center;justify-content:space-between;gap:8px;${p.username===c.username?'background:#2f1a52;border-radius:10px;padding:12px 8px;':''}">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0"><b style="min-width:34px;font-size:${i<3?'20px':'14px'}">${medal(i)}</b><span style="font-size:22px">${esc(p.avatar||'🎮')}</span>
+        <div style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis">${i===0?'👑 ':''}${esc(p.username)}</b><span class="small muted">${p.gameName?esc(p.gameName)+' · ':''}${Number(p.points||0)} pts</span></div></div>
+        <span class="stat" style="font-size:16px;white-space:nowrap">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')}</span></div>`;
+    let top=list.slice(0,50);
+    body=`<h2>📊 Leaderboard</h2><p class="small muted">Ranked by coins · Your rank: <b style="color:#ffdc45">#${myRank||'-'}</b> of ${list.length}</p>
+      <div class="card">${top.map(row).join('')||'<p class="muted">No players yet.</p>'}${myRank>50?'<div class="small muted" style="text-align:center;padding:6px">• • •</div>'+row(list[myRank-1],myRank-1):''}</div>`;
+  }
+
+  else if(tab==='acc'){
+    body = editProf ? editView(c) : profileView(c);
+  }
+
+  root.innerHTML = `<div>${body}</div>${navHtml}`;
+}
+
+async function doLogin(){
+  let u=$('lu')?.value.trim(), p=$('lp')?.value;
+  if(!u||!p){toast('Fill all fields');return}
+  let player = data.players.find(x=>String(x.username).toLowerCase()===u.toLowerCase());
+  if(!player){toast('Player not found');return}
+  let h = await sha(p);
+  if(player.passHash!==h){toast('Wrong password');return}
+  setSession({username:player.username});
+  render();
+  toast('Welcome '+player.username+'!');
+}
+
+async function signup(){
+  let u=$('nu')?.value.trim(), p=$('np')?.value;
+  if(!u||u.length<3||!p||p.length<8){toast('Username 3+ and password 8+ chars required');return}
+  let h=await sha(p);
+  let r=await mutate(d=>{
+    if(d.players.some(x=>String(x.username).toLowerCase()===u.toLowerCase()))return{err:'Username taken'};
+    let now=new Date().toLocaleString();
+    d.players.push({username:u,passHash:h,created:now,demoCoins:0,points:0});
+    return{ok:true};
+  });
+  if(r.err){toast(r.err);return}
+  setSession({username:u});
+  render();
+  toast('Account created! Welcome '+u);
+}
+
+async function joinT(id){
+  let c=me();if(!c)return;
+  let r=await mutate(d=>{
+    let t=d.tournaments.find(x=>x.id===id), p=d.players.find(x=>x.username===c.username);
+    if(!t||!p)return{err:'Tournament not found'};
+    if(t.players.includes(p.username))return{err:'Already joined'};
+    if(t.players.length>=(t.maxPlayers||0))return{err:'Slots full'};
+    let fee=Number(t.entryFee||0);
+    if(Number(p.demoCoins||0)<fee)return{err:'Not enough coins'};
+    if(fee)p.demoCoins=Number(p.demoCoins||0)-fee;
+    t.players.push(p.username);
+    return{ok:true,fee};
+  });
+  if(r.err){toast(r.err);return}
+  toast('Joined! '+r.fee+' coins deducted.');
+  render();
+}
+
+async function deposit(){
+  let amount=Math.floor(Number($('da')?.value)), utr=$('du')?.value.trim(), c=me();
+  if(!amount||amount<50){toast('Minimum ₹50');return}
+  if(!utr){toast('UTR required');return}
+  let r=await mutate(d=>{
+    d.depositRequests.push({id:Date.now(),username:c.username,amount,coins:amount,utr,status:'Pending',created:new Date().toLocaleString()});
+    return{ok:true};
+  });
+  if(r.err){toast(r.err);return}
+  toast('Deposit request sent!');
+  render();
+}
+
+async function withdraw(){
+  let coins=Math.floor(Number($('wa')?.value)), upi=($('wu')?.value||'').trim(), c=me();
+  if(!coins||coins<50){toast('Minimum 50 coins');return}
+  if(!UPI_RE.test(upi)){toast('Enter a valid UPI ID (e.g. name@upi)');return}
+  let r=await mutate(d=>{
+    let p=d.players.find(x=>x.username===c.username);
+    if(!p)return{err:'Player not found'};
+    if(Number(p.demoCoins||0)<coins)return{err:'Not enough coins'};
+    p.demoCoins=Number(p.demoCoins||0)-coins;
+    d.withdrawals.push({id:Date.now(),username:p.username,coins,upi,status:'Pending',created:new Date().toLocaleString()});
+    return{ok:true};
+  });
+  if(r.err){toast(r.err);return}
+  toast('Withdrawal request sent!');
+  render();
+}
+
+// ====== Profile ======
+function startEdit(){let c=me();pickAv=(c&&c.avatar)||'🎮';editProf=true;render()}
+function setAv(el){pickAv=el.dataset.a;document.querySelectorAll('.avb').forEach(b=>{b.style.borderColor=b.dataset.a===pickAv?'#ffd52e':'#63417f'})}
+
+async function saveProfile(){
+  let c=me();if(!c)return;
+  let v=id=>($(id)?.value||'').trim();
+  let f={fullName:v('pf_name').slice(0,40),gameName:v('pf_game').slice(0,30),gameUid:v('pf_uid').slice(0,20),phone:v('pf_phone').replace(/\s/g,''),email:v('pf_email').slice(0,60),upi:v('pf_upi'),avatar:pickAv||c.avatar||'🎮'};
+  if(f.phone&&!/^\+?\d{10,13}$/.test(f.phone)){toast('Enter a valid mobile number');return}
+  if(f.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)){toast('Enter a valid email');return}
+  if(f.upi&&!UPI_RE.test(f.upi)){toast('Enter a valid UPI ID (e.g. name@upi)');return}
+  let r=await mutate(d=>{
+    let p=d.players.find(x=>x.username===c.username);
+    if(!p)return{err:'Player not found'};
+    if((p.upi||'')!==f.upi){p.upiStatus=f.upi?'Pending':''}
+    Object.assign(p,f);
+    return{ok:true};
+  });
+  if(r.err){toast(r.err);return}
+  editProf=false;pendingRender=false;
+  toast('Profile saved ✓');
+  render();
+}
+
+async function changePw(){
+  let c=me();if(!c)return;
+  let o=$('pw_old')?.value, n=$('pw_new')?.value;
+  if(!o||!n){toast('Fill both fields');return}
+  if(n.length<8){toast('New password must be 8+ chars');return}
+  if(await sha(o)!==c.passHash){toast('Current password is wrong');return}
+  let h=await sha(n);
+  let r=await mutate(d=>{
+    let p=d.players.find(x=>x.username===c.username);
+    if(!p)return{err:'Player not found'};
+    p.passHash=h;
+    return{ok:true};
+  });
+  if(r.err){toast(r.err);return}
+  if($('pw_old'))$('pw_old').value='';if($('pw_new'))$('pw_new').value='';
+  toast('Password updated ✓');
+}
+
+// Start
+init();
+</script>
+</body></html>

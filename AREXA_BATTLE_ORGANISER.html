@@ -1,0 +1,101 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AREXA BATTLE Organiser</title><style>
+:root{--bg:#080b12;--line:#273449;--red:#ef3340;--muted:#9aa8bb;--white:#f5f7fb;--gold:#f5c451}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#182235,#080b12 48%);color:var(--white);font:15px Arial,sans-serif}
+.wrap{max-width:1000px;margin:auto;padding:18px 14px 60px}.top{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.brand{font-weight:900;font-size:20px;letter-spacing:1px}.brand span{color:var(--red)}.sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+h2{font-size:18px;margin:8px 0 12px}.muted{color:var(--muted)}.card{background:linear-gradient(145deg,#151f30,#0e1521);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+label{display:block;color:#c8d2e1;font-size:13px;margin:10px 0 6px}input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #34445c;background:#080e18;color:#fff;font:inherit}
+textarea{min-height:70px}.btn{border:0;border-radius:10px;padding:10px 14px;background:var(--red);color:#fff;font-weight:800;cursor:pointer;margin:4px 4px 4px 0}.btn.alt{background:#273449}.btn.good{background:#15803d}.btn.warn{background:#9a3412}
+.tag{font-size:11px;border:1px solid #46566c;padding:4px 8px;border-radius:20px;color:#d8e1ee}.ok{color:#22c55e}.bad{color:#ef3340}.pend{color:#f5c451}
+.stat{font-size:24px;font-weight:900;color:var(--gold)}.item{padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.small{font-size:12px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 0;position:sticky;top:0;background:#0a0f19;z-index:5}.tabs .btn{white-space:nowrap;margin:0}.tabs .on{background:var(--red)}
+.notice{border:1px solid #665327;background:#241e11;color:#f7d98b;padding:12px;border-radius:12px;font-size:13px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#263449;padding:12px 18px;border-radius:12px;display:none;z-index:9}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;margin-right:6px}
+.sc{max-height:55vh;overflow-y:auto}.dot.off{background:#64748b}
+</style></head><body><div class="wrap">
+<header class="top"><div class="brand">AREXA <span>BATTLE</span><div class="sub">ORGANISER PANEL</div></div><span class="tag"><i class="dot"></i>LIVE</span></header>
+<div id="app"><p class="muted">Loading...</p></div><div id="toast" class="toast"></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+if(!firebase.apps.length){firebase.initializeApp({apiKey:"AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",authDomain:"arexabattle-75a47.firebaseapp.com",databaseURL:"https://arexabattle-75a47-default-rtdb.firebaseio.com",projectId:"arexabattle-75a47",storageBucket:"arexabattle-75a47.firebasestorage.app",messagingSenderId:"1028204149228",appId:"1:1028204149228:web:594d12f5e50c3c1bcc68c9"})}
+const db=firebase.database(),CLOUD='arexaBattle/sharedData',ORG='arexaBattle/organisers',LOGS='arexaBattle/organiserLogs',PRES='arexaBattle/presence',SK='arexa_org_session';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const arr=x=>Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[]);
+const key=u=>String(u).toUpperCase().replace(/[.#$\[\]\/]/g,'_');
+function toast(s){let t=$('toast');t.textContent=s;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',2500)}
+async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function norm(d){d=Object.assign({},d||{});for(const k of['players','tournaments','withdrawals','depositRequests','coinRequests','transactions'])d[k]=arr(d[k]).filter(x=>x&&typeof x==='object');d.tournaments.forEach(t=>t.players=arr(t.players));return d}
+let data=norm(null),orgs={},pres={},ready=false,busy=false,tab=localStorage.getItem('arexa_org_tab')||'live',q='';
+const session=()=>{try{return JSON.parse(localStorage.getItem(SK)||'null')}catch{return null}};
+const me=()=>{let s=session();return s&&orgs[key(s.username)]&&orgs[key(s.username)].active!==false?orgs[key(s.username)]:null};
+function logout(){localStorage.removeItem(SK);location.reload()}
+function setTab(t){tab=t;q='';localStorage.setItem('arexa_org_tab',t);render()}
+function typing(){let a=document.activeElement;return a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)}
+function log(action){let o=me();if(o)db.ref(LOGS).push({organiser:o.username,action,created:new Date().toLocaleString(),ts:Date.now()})}
+// Safe live save: latest server data par change lagta hai (admin/player ka data overwrite nahi hota)
+function mutate(fn,logText){
+  if(!ready){toast('Server connect nahi hai');return}
+  if(busy){toast('Wait...');return}
+  busy=true;let err=null;
+  db.ref(CLOUD).transaction(cur=>{err=null;if(!cur)return;let d=norm(cur),r;try{r=fn(d)||{}}catch(e){err='Error';return}if(r.err){err=r.err;return}return d},
+  (e,c,s)=>{busy=false;if(e||!c){toast(err||'Save failed, try again');return}data=norm(s.val());if(logText)log(logText);render();toast('✓ Done')},false)}
+function init(){
+  db.ref(ORG).on('value',s=>{orgs=s.val()||{};if(!typing())render()});
+  db.ref(PRES).on('value',s=>{pres={};Object.values(s.val()||{}).forEach(x=>{if(x&&x.username)pres[String(x.username).toLowerCase()]=x});if(!typing())render()},()=>{});
+  db.ref(CLOUD).on('value',s=>{ready=true;if(s.exists())data=norm(s.val());if(!typing())render()},e=>{toast('DB error: '+(e.code||e.message))});
+  render()}
+const TABS=[['live','🔔 Live'],['tour','🏆 Tournaments'],['players','👥 Players'],['upi','✅ UPI Approval']];
+const upiOf=p=>p.upi||'';
+const isOn=p=>{let x=pres[String(p.username).toLowerCase()];return !!x&&x.online===true};
+const seen=p=>{let x=pres[String(p.username).toLowerCase()];if(!x||!x.lastSeen)return'never';let m=Math.round((Date.now()-x.lastSeen)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' hr ago':Math.floor(m/1440)+' day ago'};
+const onFirst=(a,b)=>(isOn(b)-isOn(a))||String(a.username).localeCompare(String(b.username));
+const SLOTS={'BR RANK':['BR Per Kill','BR Survival','BR Solo Rank','BR Duo Rank','BR Squad Rank'],'CS CUSTOM':['1v1 Custom','2v2 Custom','4v4 Custom','1v1 Headshot Only','2v2 Headshot Only','4v4 Headshot Only','UMP Only','One Tap Only','10Rs Custom'],'LONE WOLF':['1v1 Headshot Only','2v2 Headshot Only','10Rs']};
+const modeOpts=c=>(SLOTS[c]||[]).map(m=>'<option>'+esc(m)+'</option>').join('');
+function catChange(){$('tMode').innerHTML=modeOpts($('tCat').value)}
+const st=p=>p.upiStatus||(p.upi?'Pending':'');
+function render(){
+  let root=$('app'),o=me();
+  if(!o){root.innerHTML=`<div class="card"><h2>🔐 Organiser Login</h2><div class="notice">ID aur password Admin banata hai. Khud account nahi ban sakta.</div><label>Username</label><input id="lu" autocapitalize="off"><label>Password</label><input id="lp" type="password"><button class="btn" onclick="doLogin()">Login</button></div>`;return}
+  let pu=data.players.filter(p=>p.upi&&st(p)==='Pending'),pd=data.depositRequests.filter(r=>r.status==='Pending'),pc=data.coinRequests.filter(r=>!r.status||r.status==='Pending'),mine=data.tournaments,on=data.players.filter(p=>isOn(p)&&!(p.blocked||p.banned));
+  let h=`<div class="row"><span class="muted small">Organiser: <b>${esc(o.username)}</b></span><button class="btn alt" onclick="logout()">Logout</button></div><div class="tabs">${TABS.map(([k,l])=>`<button class="btn alt ${tab===k?'on':''}" onclick="setTab('${k}')">${l}${k==='upi'&&pu.length?' ('+pu.length+')':''}</button>`).join('')}</div>`;
+  if(tab==='live'){
+    h+=`<div class="grid"><div class="card"><div class="stat">${data.players.length}</div><div class="muted">Players</div></div><div class="card"><div class="stat ok">${on.length}</div><div class="muted">Online Now</div></div><div class="card"><div class="stat">${mine.filter(t=>t.status==='Open').length}</div><div class="muted">Open Matches</div></div><div class="card"><div class="stat bad">${pu.length}</div><div class="muted">UPI Pending</div></div><div class="card"><div class="stat">${pd.length+pc.length}</div><div class="muted">Deposit/Coin Requests</div></div></div>`;
+    h+=`<div class="card"><h2>🔔 Player Requests</h2>${pu.map(p=>`<div class="item small">UPI request: <b>${esc(p.username)}</b> • ${esc(p.upi)}</div>`).join('')}${pd.map(r=>`<div class="item small">Deposit: <b>${esc(r.username)}</b> • ₹${r.amount}</div>`).join('')}${pc.map(r=>`<div class="item small">Coin request: <b>${esc(r.username||'')}</b> • ${esc(r.coins||r.amount||'')}</div>`).join('')}${(pu.length+pd.length+pc.length)?'':'<p class="muted small">Koi pending request nahi.</p>'}</div>`;
+    h+=`<div class="card"><h2>🟢 Live Players (${on.length}/${data.players.length})</h2><div class="sc">${on.sort(onFirst).map(p=>`<div class="item small row"><span><i class="dot"></i><b>${esc(p.username)}</b>${p.gameName?' · '+esc(p.gameName):''}</span><span class="tag">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')}</span></div>`).join('')||'<p class="muted small">Abhi koi player online nahi.</p>'}</div></div>
+    <div class="card"><h2>🎮 Live Joins</h2>${mine.filter(t=>t.status==='Open').map(t=>`<div class="item small"><b>${esc(t.name)}</b> • ${t.players.length}/${t.maxPlayers} joined<br><span class="muted">${esc(t.players.slice(-5).join(', '))}</span></div>`).join('')||'<p class="muted small">No open match.</p>'}</div>`}
+  if(tab==='tour')h+=`<div class="card"><h2>🏆 Create Custom Match</h2><label>Name</label><input id="tName"><div class="grid"><div><label>Category</label><select id="tCat" onchange="catChange()"><option>BR RANK</option><option>CS CUSTOM</option><option>LONE WOLF</option></select></div><div><label>Game</label><input id="tGame" value="Free Fire"></div><div><label>Mode</label><select id="tMode">${modeOpts('BR RANK')}</select></div><div><label>Date & Time</label><input id="tDate" type="datetime-local"></div><div><label>Slots</label><input id="tMax" type="number" value="48"></div><div><label>Entry Fee</label><input id="tFee" type="number" value="0"></div></div><label>Room ID</label><input id="tRoomId"><label>Room Password</label><input id="tRoomPass"><label>Prize</label><input id="tPrize"><label>Rules</label><textarea id="tRules"></textarea><button class="btn good" onclick="createT()">Create & Publish</button></div>
+    <div class="card"><h2>All Matches</h2>${mine.slice().reverse().map(t=>`<div class="item"><div class="row"><b>${esc(t.name)}</b><span class="tag">${esc(t.status)}</span></div><p class="small muted">${esc(t.mode)} • ${t.players.length}/${t.maxPlayers} • Fee ${t.entryFee||0} • by ${esc(t.organizer||'')}</p>
+    <div class="grid"><div><label>Room ID</label><input id="rid_${t.id}" value="${esc(t.roomId||'')}"></div><div><label>Room Password</label><input id="rpass_${t.id}" value="${esc(t.roomPassword||'')}"></div></div>
+    <label>Result / Winner</label><input id="res_${t.id}" value="${esc(t.result||'')}">
+    <button class="btn good" onclick="saveRoom(${t.id})">Save Room & Result</button><button class="btn alt" onclick="setStatus(${t.id},'Open')">Open</button><button class="btn warn" onclick="setStatus(${t.id},'Closed')">Close</button><button class="btn alt" onclick="setStatus(${t.id},'Completed')">Completed</button>
+    <div class="small" style="margin-top:8px">${t.players.map(u=>`<span class="tag" style="display:inline-block;margin:3px">${esc(u)} <a href="#" onclick="kick(${t.id},'${esc(u)}');return false" class="bad">✕</a></span>`).join('')||'<span class="muted">No players joined.</span>'}</div></div>`).join('')||'<p class="muted">No matches.</p>'}</div>`;
+  if(tab==='players'){let L=data.players.filter(p=>p.username.toLowerCase().includes(q.toLowerCase())).sort(onFirst);
+    h+=`<div class="card"><h2>👥 Players (${data.players.length} · 🟢 ${on.length} online)</h2><input id="psearch" placeholder="Search player..." value="${esc(q)}" oninput="q=this.value;render();$('psearch').focus()"></div><div class="card">${L.map(p=>{let bl=p.blocked||p.banned;return`<div class="item"><div class="row"><b>${esc(p.username)} ${bl?'<span class="bad small">🚫 BLOCKED</span>':''}</b><span class="tag">🪙 ${Number(p.demoCoins||0).toLocaleString('en-IN')}</span></div>
+    <div class="small">${isOn(p)?'<i class="dot"></i><b class="ok">Online</b>':'<i class="dot off"></i><span class="muted">Offline · '+seen(p)+'</span>'}</div>
+    <div class="small muted">UPI: ${esc(upiOf(p)||'not added')} ${p.upi?`<b class="${st(p)==='Approved'?'ok':st(p)==='Rejected'?'bad':'pend'}">${st(p)}</b>`:''}</div>
+    <div class="row" style="margin-top:8px"><input id="coins_${esc(p.username)}" type="number" min="1" placeholder="Coins" style="max-width:110px"><button class="btn good" onclick="addCoins('${esc(p.username)}')">➕ Add Coins</button><button class="btn ${bl?'good':'warn'}" onclick="block('${esc(p.username)}',${!bl})">${bl?'Unblock':'Block'}</button></div></div>`}).join('')||'<p class="muted">No players.</p>'}</div>`}
+  if(tab==='upi')h+=`<div class="card"><h2>✅ UPI Approval</h2>${data.players.filter(p=>p.upi).sort((a,b)=>(st(a)==='Pending'?0:1)-(st(b)==='Pending'?0:1)).map(p=>`<div class="item"><div class="row"><b>${esc(p.username)}</b><span class="${st(p)==='Approved'?'ok':st(p)==='Rejected'?'bad':'pend'}">${st(p)}</span></div><div class="small">${esc(p.upi)} <a href="#" onclick="navigator.clipboard.writeText('${esc(p.upi)}');toast('Copied');return false">Copy</a></div><button class="btn good" onclick="setUpi('${esc(p.username)}','Approved')">✅ Approve</button><button class="btn warn" onclick="setUpi('${esc(p.username)}','Rejected')">❌ Reject</button></div>`).join('')||'<p class="muted">Kisi player ne UPI add nahi ki.</p>'}</div>`;
+  root.innerHTML=h}
+async function doLogin(){let u=$('lu').value.trim(),p=$('lp').value;if(!u||!p){toast('Fill all fields');return}
+  let o=orgs[key(u)];if(!o||o.active===false||o.passHash!==await sha(p)){toast('Wrong username/password');return}
+  localStorage.setItem(SK,JSON.stringify({username:o.username}));log('Login');render();toast('Welcome '+o.username)}
+const T=(d,id)=>d.tournaments.find(x=>x.id===id),P=(d,u)=>d.players.find(x=>x.username===u);
+const now=()=>new Date().toLocaleString();
+function createT(){let name=$('tName').value.trim();if(!name){toast('Enter name');return}let o=me();
+  let t={id:Date.now(),name,category:$('tCat').value,game:$('tGame').value||'Free Fire',mode:$('tMode').value,date:$('tDate').value,maxPlayers:Number($('tMax').value||48),entryFee:Number($('tFee').value||0),roomId:$('tRoomId').value.trim(),roomPassword:$('tRoomPass').value.trim(),prize:$('tPrize').value.trim(),rules:$('tRules').value.trim(),status:'Open',organizer:o.username,players:[],created:now()};
+  mutate(d=>{d.tournaments.push(t)},'Created match: '+name)}
+function saveRoom(id){let a=$('rid_'+id).value.trim(),b=$('rpass_'+id).value.trim(),r=$('res_'+id).value.trim();
+  mutate(d=>{let t=T(d,id);if(!t)return{err:'Not found'};t.roomId=a;t.roomPassword=b;t.result=r},'Room/Result updated: '+(T(data,id)||{}).name)}
+function setStatus(id,s){mutate(d=>{let t=T(d,id);if(!t)return{err:'Not found'};t.status=s},'Status '+s+': '+(T(data,id)||{}).name)}
+function kick(id,u){if(!confirm(u+' ko match se hataye? Entry fee refund hogi.'))return;
+  mutate(d=>{let t=T(d,id),p=P(d,u);if(!t)return{err:'Not found'};t.players=t.players.filter(x=>x!==u);let f=Number(t.entryFee||0);if(p&&f){p.demoCoins=Number(p.demoCoins||0)+f;d.transactions.push({id:Date.now(),username:u,kind:'Kicked - refund',type:'Refund',coins:f,note:t.name,status:'Completed',created:now()})}},'Kicked '+u+' from '+(T(data,id)||{}).name)}
+function addCoins(u){let n=Math.floor(Number($('coins_'+u)?.value));if(!n||n<1){toast('Valid coins daalo');return}
+  mutate(d=>{let p=P(d,u);if(!p)return{err:'Player not found'};p.demoCoins=Number(p.demoCoins||0)+n;d.transactions.push({id:Date.now(),username:u,kind:'Organiser added coins',type:'Organiser Coins',coins:n,note:'By '+me().username,status:'Completed',created:now()})},'Added '+n+' coins to '+u)}
+function block(u,b){mutate(d=>{let p=P(d,u);if(!p)return{err:'Player not found'};p.blocked=b},(b?'Blocked ':'Unblocked ')+u)}
+function setUpi(u,s){mutate(d=>{let p=P(d,u);if(!p)return{err:'Player not found'};p.upiStatus=s},'UPI '+s+': '+u)}
+init();
+</script></body></html>

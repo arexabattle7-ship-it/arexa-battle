@@ -8,7 +8,6 @@
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 // Firebase Init
@@ -21,8 +20,27 @@ const FB = {
   messagingSenderId:"1028204149228",
   appId:"1:1028204149228:web:594d12f5e50c3c1bcc68c9"
 };
-if(!firebase.apps.length) firebase.initializeApp(FB);
-const db = firebase.database();
+let db = null, netErr = '';
+function loadScript(src){return new Promise(res=>{let t=document.createElement('script');t.src=src;t.onload=()=>res(true);t.onerror=()=>res(false);document.head.appendChild(t)})}
+async function ensureFirebase(){
+  try{
+    if(typeof firebase==='undefined'||!firebase.database){
+      const SRC=[
+        ['https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js','https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js'],
+        ['https://unpkg.com/firebase@10.14.1/firebase-app-compat.js','https://unpkg.com/firebase@10.14.1/firebase-database-compat.js'],
+        ['https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js']
+      ];
+      for(const pair of SRC){
+        if(typeof firebase!=='undefined'&&firebase.database)break;
+        if(await loadScript(pair[0]))await loadScript(pair[1]);
+      }
+    }
+    if(typeof firebase==='undefined'||!firebase.database)return false;
+    if(!firebase.apps.length)firebase.initializeApp(FB);
+    db=firebase.database();
+    return true;
+  }catch(e){console.error(e);netErr='Error: '+(e&&e.message?e.message:e);return false}
+}
 const CLOUD = 'arexaBattle/sharedData';
 const STORE = 'arexa_battle_data';
 const SKEY = 'arexa_player_session';
@@ -32,275 +50,222 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
 async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 
-let data = {admin:{username:'AREXAADMIN',passHash:''},players:[],tournaments:[],withdrawals:[],depositRequests:[],coinRequests:[],transactions:[],paymentSettings:{}};
-let cloudReady = false;
-let tab = 'home';
-let selCat = '';
-let selSlot = '';
-let selTour = null;
+// ====== SETTINGS ======
+const APK_LINK = '';      // 👈 Yahan apna direct APK download link paste karo (https://....apk)
+const REF_BONUS = 5;      // Referral coins (referrer ko milte hain)
+const UPI_RE = /^[\w.\-]{2,}@[a-zA-Z]{2,}$/;
+const AVATARS = ['🎮','🐺','🦁','🐯','🔥','⚡','👑','💀','🦅','🐉','🥷','🤖'];
 
-function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch{return null}}
+function arr(x){return Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[])}
+function normalize(d){
+  d=d||{};
+  let o=Object.assign({},d);
+  o.admin=d.admin||{username:'AREXAADMIN',passHash:''};
+  ['players','tournaments','withdrawals','depositRequests','coinRequests','transactions'].forEach(k=>{o[k]=arr(d[k]).filter(x=>x&&typeof x==='object')});
+  o.paymentSettings=d.paymentSettings||{};
+  o.tournaments.forEach(t=>{t.players=arr(t.players)});
+  return o;
+}
+
+let data = normalize(null);
+let cloudReady = false, loaded = false, busy = false;
+let tab = 'home', selCat = '', selSlot = '', selTour = null, filtCat = '', authMode = 'login';
+try{if(localStorage.getItem('arexa_ref'))authMode='signup'}catch(e){}
+// Optional: apne khud ke photo lagane ke liye  'CATEGORY|Mode' : 'https://photo-link.jpg'
+const MODE_IMG = {};
+let editProf = false, pickAv = '', pendingRender = false, presenceFor = '';
+
+try{let cc=JSON.parse(localStorage.getItem(STORE)||'null');if(cc)data=normalize(cc)}catch(e){}
+try{let q=new URLSearchParams(location.search).get('ref');if(q)localStorage.setItem('arexa_ref',q.slice(0,40))}catch(e){}
+
+function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch(e){return null}}
 function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
 function logout(){localStorage.removeItem(SKEY);location.reload()}
 function me(){let s=session();if(!s)return null;return data.players.find(x=>x.username===s.username)||null}
-function saveLocal(){localStorage.setItem(STORE,JSON.stringify(data))}
-function saveCloud(){saveLocal();if(!cloudReady)return;db.ref(CLOUD).set(data).catch(e=>console.error(e))}
+function saveLocal(){try{localStorage.setItem(STORE,JSON.stringify(data))}catch(e){}}
+function isBlocked(p){return !!p&&(p.banned===true||p.blocked===true||p.status==='Banned'||p.status==='Blocked'||p.status==='banned'||p.status==='blocked')}
 
-// Load data from Firebase
+// Safe live save: always applies change on the LATEST server data (no overwriting admin/organiser changes)
+function mutate(fn){
+  return new Promise(resolve=>{
+    if(!cloudReady||!db){resolve({err:'No internet connection. Please try again.'});return}
+    if(busy){resolve({err:'Please wait...'});return}
+    busy=true;
+    let out=null, done=false;
+    let finish=r=>{if(done)return;done=true;busy=false;resolve(r)};
+    let timer=setTimeout(()=>finish({err:'Slow connection. Check your wallet before retrying.'}),12000);
+    db.ref(CLOUD).transaction(cur=>{
+      out=null;
+      let d=normalize(cur||JSON.parse(JSON.stringify(data)));
+      let r;
+      try{r=fn(d)||{}}catch(e){console.error(e);out={err:'Something went wrong'};return}
+      if(r.err){out=r;return}
+      out=r;return d;
+    },(err,committed,snap)=>{
+      clearTimeout(timer);
+      if(err){console.error(err);finish({err:'Save failed. Try again.'});return}
+      if(!committed){finish(out&&out.err?out:{err:'Please try again'});return}
+      data=normalize(snap.val());saveLocal();finish(out||{ok:true});
+    },false);
+  });
+}
+
+function typing(){let a=document.activeElement;return !!a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')}
+function softRender(){if(typing()||editProf){pendingRender=true}else render()}
+document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{if(!typing()&&!editProf){pendingRender=false;render()}},250)});
+
+// Live connection with Firebase (admin / organiser changes show instantly)
 async function init(){
+  let first=true;
+  if(!(await ensureFirebase())){netErr=netErr||'Firebase library load nahi hui (CDN block ya APK mein INTERNET permission missing)';toast('Offline mode');loaded=true;render();return}
+  await new Promise(res=>{
+    let t=setTimeout(()=>{netErr='Server se 8 sec mein response nahi aaya (slow internet ya Firebase URL/rules issue)';toast('Offline mode');res()},8000);
+    try{
+      db.ref(CLOUD).on('value',snap=>{
+        cloudReady=true;
+        if(snap.exists()){data=normalize(snap.val());saveLocal()}
+        if(first){first=false;clearTimeout(t);toast('Connected ✓');res()}
+        if(loaded)softRender();
+      },err=>{console.error(err);netErr='Database error: '+(err&&err.code?err.code:err&&err.message?err.message:'unknown')+' (Firebase Rules check karo)';clearTimeout(t);res()});
+    }catch(e){console.error(e);netErr='Error: '+(e&&e.message?e.message:e);clearTimeout(t);res()}
+  });
+  loaded=true;
+  render();
+  startPresence();
+}
+
+function startPresence(){
   try{
-    let snap = await db.ref(CLOUD).once('value');
-    if(snap.exists()){
-      let d = snap.val();
-      data.admin = d.admin||data.admin;
-      data.players = d.players||[];
-      data.tournaments = d.tournaments||[];
-      data.withdrawals = d.withdrawals||[];
-      data.depositRequests = d.depositRequests||[];
-      data.coinRequests = d.coinRequests||[];
-      data.transactions = d.transactions||[];
-      data.paymentSettings = d.paymentSettings||{};
-    }
-    cloudReady = true;
-    // Listen for changes
-    db.ref(CLOUD).on('value', snap=>{
-      if(snap.exists()){
-        let d=snap.val();
-        data.admin=d.admin||data.admin;
-        data.players=d.players||[];
-        data.tournaments=d.tournaments||[];
-        data.withdrawals=d.withdrawals||[];
-        data.depositRequests=d.depositRequests||[];
-        data.coinRequests=d.coinRequests||[];
-        data.transactions=d.transactions||[];
-        data.paymentSettings=d.paymentSettings||{};
-        render();
+    let s=session();if(!s||!db||presenceFor===s.username)return;
+    presenceFor=s.username;
+    let ref=db.ref('arexaBattle/presence/'+s.username.replace(/[.#$\[\]\/]/g,'_'));
+    let TS=firebase.database.ServerValue.TIMESTAMP;
+    db.ref('.info/connected').on('value',sn=>{
+      if(sn.val()===true){
+        ref.onDisconnect().set({username:s.username,online:false,lastSeen:TS}).catch(()=>{});
+        ref.set({username:s.username,online:true,lastSeen:TS}).catch(()=>{});
       }
     });
-    toast('Connected ✓');
-  }catch(e){
-    console.error(e);
-    toast('Offline mode');
-  }
-  render();
+  }catch(e){}
 }
 
-function render(){
-  let root=$('app'), s=session(), c=me();
-  if(!s || !c){
-    root.innerHTML = `
-      <div class="card"><h2 style="margin:0 0 16px">🎮 Player Login</h2>
-        <div class="field"><label>Username</label><input id="lu" placeholder="Your username"></div>
+// ====== Sharing / referral helpers ======
+function appLink(code){
+  if(APK_LINK)return APK_LINK;
+  let ps=data.paymentSettings||{};
+  return ps.apkLink?String(ps.apkLink):'';
+}
+function shareText(code){
+  let l=appLink(code);
+  return '🎮 AREXA BATTLE — play tournaments & win coins!\n'+(l?'📲 Download the app: '+l+'\n':'')+(code?'🎁 Refer ID: '+code+'\n(Account banate time ye Refer ID daalo)':'');
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}catch(e){
+    try{let a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();let ok=document.execCommand('copy');a.remove();return ok}catch(_){return false}
+  }
+}
+function inviteText(){let c=me();return shareText(c?c.username:'')}
+async function shareApp(){
+  let text=inviteText();
+  try{if(navigator.share){await navigator.share({title:'AREXA BATTLE',text});return}}catch(e){if(e&&e.name==='AbortError')return}
+  showInvite();
+}
+function showInvite(){
+  closeInvite();
+  let text=inviteText();
+  let o=document.createElement('div');
+  o.id='invbox';
+  o.style.cssText='position:fixed;inset:0;background:#000b;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.innerHTML=`<div class="card" style="width:100%;max-width:400px;margin:0">
+    <b>📲 Invite Friends</b>
+    <p class="small muted">Ye message copy karke WhatsApp / kisi bhi app mein bhejo. Isme app link aur tumhara Refer ID hai.</p>
+    <textarea id="invtxt" readonly style="width:100%;min-height:130px;padding:10px;border-radius:10px;border:1px solid #63417f;background:#10091f;color:#fff;font:inherit;font-size:13px">${esc(text)}</textarea>
+    <button class="btn" onclick="copyInvite()">📋 Copy Invite</button>
+    <a class="btn alt" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">💬 Open WhatsApp</a>
+    <button class="btn alt" onclick="closeInvite()">Close</button>
+  </div>`;
+  document.body.appendChild(o);
+  try{let t=$('invtxt');t.focus();t.select()}catch(e){}
+}
+function closeInvite(){let o=$('invbox');if(o)o.remove()}
+async function copyInvite(){
+  let t=$('invtxt'), ok=await copyText(inviteText());
+  if(!ok&&t){try{t.focus();t.select();t.setSelectionRange(0,99999);ok=document.execCommand('copy')}catch(e){}}
+  toast(ok?'Invite copied ✓ ab paste karke bhejo':'Text select ho gaya - Copy dabao');
+}
+function shareWA(){showInvite()}
+async function copyCode(){let c=me();if(!c)return;if(await copyText(c.username))toast('Refer ID copied ✓');else showInvite()}
+
+function sortedPlayers(){
+  return data.players.filter(p=>!isBlocked(p)).sort((a,b)=>(Number(b.demoCoins)||0)-(Number(a.demoCoins)||0)||(Number(b.points)||0)-(Number(a.points)||0)||String(a.username).localeCompare(String(b.username)));
+}
+
+function openSlot(i){let t=(window._tiles||[])[i];if(!t)return;selCat=t.cat;selSlot=t.mode;render()}
+function setAuth(m){authMode=m;render()}
+function loginView(){
+  let ref=''; try{ref=localStorage.getItem('arexa_ref')||''}catch(e){}
+  let tabBtn=(m,l)=>`<button onclick="setAuth('${m}')" style="border:0;border-radius:9px;padding:11px 4px;font-weight:900;font-size:13px;cursor:pointer;${authMode===m?'background:linear-gradient(90deg,#ffe34b,#ffb800);color:#211500':'background:none;color:#d9c8ec'}">${l}</button>`;
+  return (cloudReady?'':`<div class="notice">⚠️ Server se connect nahi ho pa raha.<br><b>Reason:</b> ${esc(netErr||'Connecting...')}<br>Check your internet, then tap Retry.<button class="btn alt" onclick="location.reload()">🔄 Retry</button></div>`)+`
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#10091f;border-radius:12px;padding:4px;margin-bottom:14px">${tabBtn('login','🎮 Login')}${tabBtn('signup','✨ Create Account')}</div>
+      ${authMode==='login'?`
+        <div class="field"><label>Username</label><input id="lu" placeholder="Your username" autocapitalize="off"></div>
         <div class="field"><label>Password</label><input id="lp" type="password" placeholder="Password"></div>
         <button class="btn" onclick="doLogin()">Login</button>
-      </div>
-      <div class="card"><h2 style="margin:0 0 16px">✨ Create Account</h2>
-        <div class="field"><label>Username</label><input id="nu" maxlength="24" placeholder="Choose username"></div>
+        <p class="small muted" style="text-align:center;margin:12px 0 0">New player? <a href="#" onclick="setAuth('signup');return false" style="color:#ffdc45">Create account</a></p>`
+      :`
+        <div class="field"><label>Username</label><input id="nu" maxlength="24" placeholder="Choose username" autocapitalize="off"></div>
         <div class="field"><label>Password (8+ chars)</label><input id="np" type="password" placeholder="Choose password"></div>
-        <button class="btn alt" onclick="signup()">Create Account</button>
-      </div>`;
-    return;
-  }
-  
-  let navHtml = `<nav class="nav">
-    <button class="${tab==='home'?'active':''}" onclick="tab='home';render()"><span class="ico">⌂</span>Home</button>
-    <button class="${tab==='tour'?'active':''}" onclick="tab='tour';render()"><span class="ico">🏆</span>Tournaments</button>
-    <button class="${tab==='wallet'?'active':''}" onclick="tab='wallet';render()"><span class="ico">🪙</span>Wallet</button>
-    <button class="${tab==='lb'?'active':''}" onclick="tab='lb';render()"><span class="ico">📊</span>Leaderboard</button>
-    <button class="${tab==='acc'?'active':''}" onclick="tab='acc';render()"><span class="ico">👤</span>Account</button>
-  </nav>`;
-  
-  let body = '';
-  
-  if(tab==='home'){
-    let open = data.tournaments.filter(t=>t.status==='Open');
-    body = `
-      <div class="hero">
-        <div class="small muted">WELCOME BACK</div>
-        <strong style="font-size:22px">${esc(c.username)}</strong>
-        <div style="margin-top:8px">🪙 <b>${Number(c.demoCoins||0).toLocaleString('en-IN')} Coins</b></div>
-      </div>
-      <div class="card">
-        <b>🏆 Open Tournaments: ${open.length}</b>
-        <p class="small muted">Join a tournament from the Tournaments tab.</p>
-        <button class="btn" onclick="tab='tour';render()">View Tournaments</button>
-      </div>`;
-  }
-  
-  else if(tab==='tour'){
-    let open = data.tournaments.filter(t=>t.status==='Open');
-    let joined = data.tournaments.filter(t=>(t.players||[]).includes(c.username));
-    const CATS = ['BR RANK','CS CUSTOM','LONE WOLF'];
-    const SLOTS = {
-      'BR RANK':['BR Survival','BR Per Kill','BR Solo Rank','BR Duo Rank','BR Squad Rank'],
-      'CS CUSTOM':['1v1 Custom','2v2 Custom','4v4 Custom','1v1 Headshot Only','2v2 Headshot Only','4v4 Headshot Only'],
-      'LONE WOLF':['1v1 Headshot Only','2v2 Headshot Only']
-    };
-    const CATINFO = {'BR RANK':'Battle Royale Ranked','CS CUSTOM':'Custom Map Matches','LONE WOLF':'Lone Wolf · Headshot Only'};
-
-    if(selTour!==null){
-      let t = open.find(x=>x.id===selTour);
-      if(!t){selTour=null;render();return}
-      let isJoined=(t.players||[]).includes(c.username);
-      body=`<button onclick="selTour=null;selSlot='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back</button>
-        <div class="card">
-          <b style="font-size:18px">${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
-          <p class="small muted">Mode: ${esc(t.mode||'')} • Entry: ${Number(t.entryFee||0)} Coins</p>
-          <p class="small muted">Players: ${(t.players||[]).length}/${t.maxPlayers||0} • Prize: ${esc(t.prize||'Not set')}</p>
-          <p class="small muted">Start: ${esc(t.date||'')}</p>
-          ${isJoined?`<div class="notice">🔐 <b>Room Details</b><br>Room ID: ${t.roomId?esc(t.roomId):'Not added yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not added yet'}</div>`:'<p class="small muted">Join to see Room ID and Password.</p>'}
-          <button class="btn ${isJoined?'alt':''}" onclick="joinT(${t.id})" ${isJoined||(t.players||[]).length>=(t.maxPlayers||0)?'disabled':''}>${isJoined?'✓ Already Joined':(t.players||[]).length>=(t.maxPlayers||0)?'Slots Full':'Join Tournament'}</button>
-        </div>`;
-    }
-    else if(!selCat){
-      body=`<h2>🏆 Tournaments</h2><p class="small muted">Select a category to explore matches.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
-        ${CATS.map(cat=>`<button onclick="selCat='${cat}';render()" style="border:1px solid #9840d0;border-radius:14px;background:linear-gradient(135deg,#562184,#170d32 48%,#8e2d77);min-height:120px;color:white;cursor:pointer;padding:16px;text-align:left">
-          <div style="font-size:22px">${cat==='BR RANK'?'🎯':cat==='CS CUSTOM'?'⚔️':'🐺'}</div>
-          <b style="display:block;margin-top:8px">${cat}</b>
-          <small style="color:#d9c7ec;font-size:10px">${CATINFO[cat]}</small>
-        </button>`).join('')}
-        </div>
-        <h2>My Registrations</h2>
-        ${joined.map(t=>`<div class="card"><b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
-          ${(t.status==='Open'||t.status==='Live')?`<div class="notice">🔐 Room ID: ${t.roomId?esc(t.roomId):'Not set yet'}<br>Password: ${t.roomPassword?esc(t.roomPassword):'Not set yet'}</div>`:''}
-        </div>`).join('')||'<div class="card"><p class="muted">No registrations yet.</p></div>'}`;
-    }
-    else if(!selSlot){
-      let slots = SLOTS[selCat]||[];
-      body=`<button onclick="selCat='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back to Categories</button>
-        <h2>${selCat}</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
-        ${slots.map(s=>`<button onclick="selSlot='${s}';render()" style="border:1px solid #9840d0;border-radius:14px;background:linear-gradient(135deg,#562184,#170d32 48%,#8e2d77);min-height:100px;color:white;cursor:pointer;padding:14px;text-align:left">
-          <b style="font-size:13px">${s}</b>
-        </button>`).join('')}
-        </div>`;
-    }
-    else{
-      let matches = open.filter(t=>t.category===selCat&&t.mode===selSlot);
-      body=`<button onclick="selSlot='';render()" style="border:0;background:none;color:#e8d8ff;font-size:14px;padding:8px 0;cursor:pointer">‹ Back to ${selCat}</button>
-        <h2>${selSlot}</h2>
-        ${matches.map(t=>`<div class="card">
-          <b>${esc(t.name)}</b> <span class="tag">${esc(t.status)}</span>
-          <p class="small muted">Entry: ${Number(t.entryFee||0)} Coins • Players: ${(t.players||[]).length}/${t.maxPlayers||0}</p>
-          <p class="small muted">Prize: ${esc(t.prize||'Not set')} • Start: ${esc(t.date||'')}</p>
-          <button class="btn" onclick="selTour=${t.id};render()">View & Join ›</button>
-        </div>`).join('')||'<div class="card"><p class="muted">No tournaments in this slot yet.</p></div>'}`;
-    }
-  }
-  
-  else if(tab==='wallet'){
-    let pay = data.paymentSettings||{};
-    let myW = (data.withdrawals||[]).filter(w=>w.username===c.username).reverse();
-    let myD = (data.depositRequests||[]).filter(r=>r.username===c.username).reverse();
-    body = `
-      <div class="card">
-        <div class="small muted">COIN BALANCE</div>
-        <div class="stat">🪙 ${Number(c.demoCoins||0).toLocaleString('en-IN')}</div>
-      </div>
-      <div class="card">
-        <b>💳 Add Coins</b>
-        ${pay.qrData?`<div style="text-align:center;padding:10px"><img src="${pay.qrData}" style="width:200px;border-radius:12px;background:white;padding:8px"></div>`:'<p class="small muted">Payment QR not set yet.</p>'}
-        ${pay.upiId?`<p>UPI: <b style="color:#ffdc45">${esc(pay.upiId)}</b></p>`:''}
-        <div class="field"><label>Amount (₹ min 50)</label><input id="da" type="number" min="50" placeholder="50"></div>
-        <div class="field"><label>UTR / Transaction ID</label><input id="du" placeholder="Transaction reference"></div>
-        <button class="btn" onclick="deposit()">Submit Deposit</button>
-      </div>
-      <div class="card">
-        <b>💸 Withdraw Coins</b>
-        <div class="field"><label>Coins (min 50)</label><input id="wa" type="number" min="50" placeholder="50"></div>
-        <div class="field"><label>Your UPI ID</label><input id="wu" placeholder="example@upi" autocapitalize="off" autocomplete="off"></div>
-        <button class="btn alt" onclick="withdraw()">Withdraw</button>
-      </div>
-      <div class="card"><b>Deposit History</b>${myD.map(r=>`<div class="item small">₹${r.amount} · <span class="tag">${esc(r.status)}</span> · ${esc(r.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>
-      <div class="card"><b>Withdrawal History</b>${myW.map(w=>`<div class="item small">🪙${w.coins} · ${esc(w.upi||'')} · <span class="tag">${esc(w.status)}</span> · ${esc(w.created)}</div>`).join('')||'<p class="muted small">None yet.</p>'}</div>`;
-  }
-  
-  else if(tab==='lb'){
-    let rows = [...data.players].sort((a,b)=>(b.points||0)-(a.points||0));
-    body = `<h2>📊 Leaderboard</h2><div class="card">${rows.map((p,i)=>`<div class="item" style="display:flex;justify-content:space-between"><b>#${i+1} ${esc(p.username)}</b><span class="stat" style="font-size:16px">${Number(p.points||0)} pts</span></div>`).join('')||'<p class="muted">No players yet.</p>'}</div>`;
-  }
-  
-  else if(tab==='acc'){
-    body = `
-      <div class="card">
-        <div style="font-size:40px;text-align:center">🎮</div>
-        <h2 style="text-align:center;margin:8px 0">${esc(c.username)}</h2>
-        <p class="small muted" style="text-align:center">AREXA BATTLE Player</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0">
-          <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins</div><div class="stat" style="font-size:18px">🪙${Number(c.demoCoins||0)}</div></div>
-          <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Points</div><div class="stat" style="font-size:18px">${Number(c.points||0)}</div></div>
-        </div>
-        <button class="btn alt" onclick="logout()">Logout</button>
-      </div>`;
-  }
-  
-  root.innerHTML = `<div>${body}</div>${navHtml}`;
+        <div class="field"><label>🎁 Refer ID (optional)</label><input id="nr" maxlength="40" placeholder="Friend's Refer ID" value="${esc(ref)}" autocapitalize="off"></div>
+        <button class="btn" onclick="signup()">Create Account</button>
+        <p class="small muted" style="text-align:center;margin:12px 0 0">Already have an account? <a href="#" onclick="setAuth('login');return false" style="color:#ffdc45">Login</a></p>`}
+    </div>
+    <div class="card"><b>👥 Invite Friends</b>
+      <p class="small muted">Share AREXA BATTLE with your friends and play together.</p>
+      <button class="btn alt" onclick="shareApp()">📲 Share App</button>
+    </div>`;
 }
 
-async function doLogin(){
-  let u=$('lu')?.value.trim(), p=$('lp')?.value;
-  if(!u||!p){toast('Fill all fields');return}
-  let player = data.players.find(x=>x.username.toLowerCase()===u.toLowerCase());
-  if(!player){toast('Player not found');return}
-  let h = await sha(p);
-  if(player.passHash!==h){toast('Wrong password');return}
-  setSession({username:player.username});
-  render();
-  toast('Welcome '+player.username+'!');
+function miniRefer(){
+  let c=me();
+  return `<div class="card"><b>🎁 Refer & Earn</b>
+    <p class="small muted">Invite friends and get <b style="color:#ffdc45">${REF_BONUS} coins</b> every time a friend signs up with your Refer ID.</p>
+    ${c?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#281743;border:1px dashed #a333ff;border-radius:10px;padding:10px 12px;margin:8px 0"><div><div class="small muted">YOUR REFER ID</div><b style="font-size:18px;letter-spacing:1px;word-break:break-all">${esc(c.username)}</b></div><button onclick="copyCode()" style="border:1px solid #8f45bd;background:#24133e;color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">Copy</button></div>`:''}
+    <button class="btn" onclick="shareApp()">📲 Share with Friends</button>
+  </div>`;
 }
 
-async function signup(){
-  let u=$('nu')?.value.trim(), p=$('np')?.value;
-  if(u.length<3||p.length<8){toast('Username 3+ and password 8+ chars required');return}
-  if(data.players.some(x=>x.username.toLowerCase()===u.toLowerCase())){toast('Username taken');return}
-  data.players.push({username:u,passHash:await sha(p),created:new Date().toLocaleString(),demoCoins:0,points:0});
-  saveCloud();
-  toast('Account created! Login now.');
-  render();
+function referCard(c){
+  let friends=data.players.filter(p=>p.referredBy===c.username);
+  return `<div class="card">
+    <b>🎁 Refer & Earn</b>
+    <p class="small muted">Invite friends to AREXA BATTLE. You get <b style="color:#ffdc45">${REF_BONUS} coins</b> each time a friend creates an account with your Refer ID.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#281743;border:1px dashed #a333ff;border-radius:10px;padding:10px 12px;margin:8px 0">
+      <div><div class="small muted">YOUR REFER ID</div><b style="font-size:18px;letter-spacing:1px;word-break:break-all">${esc(c.username)}</b></div>
+      <button onclick="copyCode()" style="border:1px solid #8f45bd;background:#24133e;color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer">Copy</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">
+      <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Friends Joined</div><div class="stat" style="font-size:18px">${friends.length}</div></div>
+      <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins Earned</div><div class="stat" style="font-size:18px">🪙${Number(c.refEarned||0)}</div></div>
+    </div>
+    ${appLink('')?`<div class="small muted" style="word-break:break-all;margin:6px 0">📲 App link: <span style="color:#ffdc45">${esc(appLink(''))}</span></div>`:`<div class="notice" style="margin:8px 0">⚠️ APK link set nahi hai, isliye abhi sirf code share hoga.</div>`}
+    <button class="btn" onclick="shareApp()">📲 Share with Friends</button>
+    <button class="btn alt" onclick="shareWA()">💬 WhatsApp / Copy Invite</button>
+    <button class="btn alt" onclick="copyLink()">🔗 Copy App Link</button>
+    ${friends.length?`<div style="margin-top:10px"><div class="small muted">Friends you referred</div>${friends.slice(-10).reverse().map(f=>`<div class="item small" style="display:flex;justify-content:space-between"><span>${esc(f.avatar||'🎮')} ${esc(f.username)}</span><span class="tag">+${REF_BONUS} 🪙</span></div>`).join('')}</div>`:''}
+  </div>`;
 }
 
-function joinT(id){
-  let c=me(), t=data.tournaments.find(x=>x.id===id);
-  if(!t||!c)return;
-  if((t.players||[]).includes(c.username)){toast('Already joined');return}
-  if((t.players||[]).length>=(t.maxPlayers||0)){toast('Slots full');return}
-  let fee=Number(t.entryFee||0);
-  if(Number(c.demoCoins||0)<fee){toast('Not enough coins');return}
-  if(fee){c.demoCoins=Number(c.demoCoins||0)-fee}
-  t.players=t.players||[];
-  t.players.push(c.username);
-  saveCloud();
-  toast('Joined! '+fee+' coins deducted.');
-  render();
-}
+function infoRow(l,v){return `<div class="item small" style="display:flex;justify-content:space-between;gap:10px"><span class="muted">${l}</span><b style="text-align:right;word-break:break-all">${v?esc(v):'—'}</b></div>`}
 
-function deposit(){
-  let amount=Number($('da')?.value), utr=$('du')?.value.trim(), c=me();
-  if(!amount||amount<50){toast('Minimum ₹50');return}
-  if(!utr){toast('UTR required');return}
-  data.depositRequests=data.depositRequests||[];
-  data.depositRequests.push({id:Date.now(),username:c.username,amount,coins:amount,utr,status:'Pending',created:new Date().toLocaleString()});
-  saveCloud();
-  toast('Deposit request sent!');
-  render();
-}
-
-function withdraw(){
-  let coins=Number($('wa')?.value), c=me();
-  if(!coins||coins<50){toast('Minimum 50 coins');return}
-  let upi=($('wu')?.value||'').trim();
-  if(!/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(upi)){toast('Enter a valid UPI ID (e.g. name@upi)');return}
-  if(Number(c.demoCoins||0)<coins){toast('Not enough coins');return}
-  c.demoCoins=Number(c.demoCoins||0)-coins;
-  data.withdrawals=data.withdrawals||[];
-  data.withdrawals.push({id:Date.now(),username:c.username,coins,upi,status:'Pending',created:new Date().toLocaleString()});
-  saveCloud();
-  toast('Withdrawal request sent!');
-  render();
-}
-
-// Start
-init();
-</script>
-</body></html>
+function profileView(c){
+  let list=sortedPlayers(), rank=list.findIndex(x=>x.username===c.username)+1;
+  return `<div class="card">
+      <div style="font-size:46px;text-align:center">${esc(c.avatar||'🎮')}</div>
+      <h2 style="text-align:center;margin:8px 0 2px">${esc(c.fullName||c.username)}</h2>
+      <p class="small muted" style="text-align:center;margin:0">@${esc(c.username)}${c.gameName?' · '+esc(c.gameName):''}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0">
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Coins</div><div class="stat" style="font-size:16px">🪙${Number(c.demoCoins||0)}</div></div>
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Points</div><div class="stat" style="font-size:16px">${Number(c.points||0)}</div></div>
+        <div style="background:#281743;border-radius:9px;padding:10px;text-align:center"><div class="small muted">Rank</div><div class="stat" style="font-size:16px">${rank?'#'+rank:'-'}</div></div>
+      <

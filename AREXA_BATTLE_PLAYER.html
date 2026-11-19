@@ -162,63 +162,97 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .room-label{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
 .room-val{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--gold2);letter-spacing:2px}
 
-
-/* ===== GROUP 1 ADDITIONS ===== */
-#splash{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 35%,#1a0a3d,#04050f 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
-#splash.hide{opacity:0;pointer-events:none}
-.sp-logo{font-size:64px;animation:spPop 1s ease-out both,spGlow 2s ease-in-out infinite}
-.sp-title{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;letter-spacing:2px;margin-top:14px;color:#f0eeff}
-.sp-title span{color:#f0c040}
-.sp-sub{font-size:11px;color:#8b80a8;letter-spacing:4px;margin-top:6px}
-.sp-bar{width:140px;height:3px;background:#1e1a35;border-radius:2px;margin-top:26px;overflow:hidden}
-.sp-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f0c040,#ffe87a);animation:spLoad 1.6s ease-in-out forwards}
-@keyframes spPop{0%{transform:scale(.3) rotate(-25deg);opacity:0}70%{transform:scale(1.15) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0)}}
-@keyframes spGlow{0%,100%{filter:drop-shadow(0 0 8px #7c3aed88)}50%{filter:drop-shadow(0 0 22px #f0c040aa)}}
-@keyframes spLoad{to{width:100%}}
-.bell-btn{position:relative;width:34px;height:34px;border-radius:50%;background:rgba(124,58,237,.14);border:1px solid var(--border2);display:none;align-items:center;justify-content:center;font-size:16px;cursor:pointer}
-.bell-badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
-.bell-ring{animation:ring .7s ease}
-@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(18deg)}40%{transform:rotate(-16deg)}60%{transform:rotate(10deg)}80%{transform:rotate(-6deg)}}
-.nt{display:flex;gap:12px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer}
-.nt:last-child{border:0}
-.nt-ico{font-size:20px;width:30px;text-align:center}
-.nt-txt{flex:1;font-size:13px;font-weight:600;line-height:1.35}
-.nt-time{font-size:10px;color:var(--muted);margin-top:3px;font-weight:500}
-.nt.unread{background:rgba(240,192,64,.06);border-radius:10px;padding-left:8px}
-.nt.unread .nt-txt::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-left:6px}
-.cd{font-size:12px;font-weight:800;color:var(--gold2);margin:2px 0 4px;letter-spacing:.5px;font-variant-numeric:tabular-nums}
-.cd:empty{display:none}
-.win-modal{text-align:center;position:relative;overflow:hidden}
-.win-trophy{font-size:72px;animation:spPop 1s ease-out both}
-.win-label{font-size:11px;color:var(--muted);letter-spacing:4px;margin-top:6px}
-.win-name{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--gold2);text-shadow:0 0 24px #f0c04066;margin:6px 0;word-break:break-all}
-.confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:41}
-.confetti i{position:absolute;top:-16px;width:8px;height:14px;opacity:.95;animation:fall linear forwards}
-@keyframes fall{to{transform:translateY(110vh) rotate(600deg)}}
-.set-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);font-weight:600;font-size:14px}
-.set-row:last-child{border:0}
-.tg{width:46px;height:26px;border-radius:13px;background:var(--border2);position:relative;cursor:pointer;transition:background .2s}
-.tg i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
-.tg.on{background:var(--purple)}
-.tg.on i{transform:translateX(20px)}
-@media(max-width:380px){.brand-sub{display:none}.brand-text{font-size:12px}.coin-pill{padding:6px 9px}.top-right{gap:7px}}
-/* LIGHT THEME */
-body.light{--bg:#f5f3ff;--bg2:#ece8fb;--bg3:#ffffff;--text:#1a1433;--muted:#6b6485;--muted2:#4a4266;--border:#ddd6f3;--border2:#cfc6ec;--gold:#c9951a;--gold2:#a8740a;--gold3:#c9951a;--purple3:#6d28d9;--card:linear-gradient(145deg,#ffffff,#f3f0fd);--hero-grad:linear-gradient(135deg,#ede7ff 0%,#e0d4ff 50%,#f5f3ff 100%);--glow:0 0 18px #7c3aed22;--glow-gold:0 0 14px #f0c04033}
-body.light .top{background:rgba(255,255,255,.95)}
-body.light .nav{background:rgba(255,255,255,.97)}
-body.light .coin-pill{background:#fff}
-body.light .toast{background:#fff}
-body.light .tour-header{background:linear-gradient(135deg,#e6dcff,#f3f0fd)}
-body.light .field input{background:#fff}
-body.light .auth-tabs{background:#ece8fb}
-body.light .wallet-bal,body.light .refer-box{background:linear-gradient(135deg,#efe8ff,#fbf8ff)}
-body.light .card-gold{background:linear-gradient(145deg,#fff7e0,#f6f0ff)}
-body.light .modal{background:#fff}
-body.light .stat-box,body.light .p-stat{background:rgba(124,58,237,.06)}
-body.light .notice{color:#7a5a10}
-body.light #splash{background:radial-gradient(circle at 50% 35%,#e0d4ff,#f5f3ff 70%)}
-body.light .sp-title{color:#1a1433}
-body.light .btn-primary,body.light .auth-tab.active{color:#1a0a00}
 /* SCROLL */
 ::-webkit-scrollbar{width:0}
-:root{--logo:url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wAARCAEAAQADASIAAhEBAxEB/8QAHQAAAgIDAQEBAAAAAAAAAAAABgcEBQIDCAEACf/EAEsQAAEDAgQDBgIHBAcFCAMBAAECAwQFEQAGEiEHMUETIlFhcYEUMggVI0JSkaFiscHRFiQzU3KCkiVDRKLwFzRjc4OTsuEYNcLx/8QAGwEAAgMBAQEAAAAAAAAAAAAABAUCAwYAAQf/xAA6EQABAgQEAwYEBQMFAQEAAAABAgMABBEhBRIxQVFhcQYTIoGhsZHB0fAUIzJC4RVS8SRicoKikrL/2gAMAwEAAhEDEQA/AOVcfXx5j3HR0e48x7j7HR0fY+x6Ek497M48rEggmMcfYyKLY2NMqcVZIvjioCJJbJNBGoIvjc0yVHli5h5dcU128txuJH/vHTa/oOZ9sWlKTHfkGNl6iya3LSLqcWg9mjzKRyHmogYGU/WyL/fGHLWFd2AqZOQHQHU9Ei/yiqpWWahVnQ1DiPPrPRCCo4I0ZIp9MF69mKk0wjmyXe2e/wDbbCiD62x7UY1TDJbzFmZinx7bwYJCvYhFk/qrFCqflinm0SnPzlj78hdgfYfyxTnKuJ6fUw17hqXGiUc3DfyQmp+MXK5uRIJ0Rk1ysuj+7aRGQfclav0GPBV3HQBS8lob8FyXHHD/APyP0xRrzpNSNEONEiI6BtsXGNIq1cqCFr+LkqQi2ooNgL8r25Y4tKNykDqSY8RiLCTRLylH/YhKR8TU+kXzr+Z1WAp0CNfkAhN/1JxEJzA4VIddZ7o1KCEp2T47DEnI8ZMqusJrEWXPguXbkBsqK0IPNaTY2Un5h6Y6Bo30fKJlyrirRMxNToZaPbQZUXWp2O4iyknSfwm4WOoGPEMlRoAPh/MEOz5CQorcFeK/okCFjN4YVh3JlFzNlxtU
+</style></head><body>
+<div class="wrap">
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="brand-logo">⚔️</div>
+      <div>
+        <div class="brand-text">AREXA <span>BATTLE</span></div>
+        <div class="brand-sub">PLAYER ARENA</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="coin-pill" id="topCoins"><span class="coin-icon">🪙</span><span id="topCoinVal">—</span></div>
+      <div class="avatar-btn" id="topAvatar" onclick="switchTab('profile')">🎮</div>
+    </div>
+  </div>
+</header>
+<div id="app"><p style="color:var(--muted);padding:30px;text-align:center">Loading...</p></div>
+<div id="toast" class="toast"></div>
+</div>
+<nav class="nav" id="nav" style="display:none">
+  <button class="nav-btn active" onclick="switchTab('home')" id="nb-home"><span class="ico">🏠</span>Home</button>
+  <button class="nav-btn" onclick="switchTab('tournaments')" id="nb-tournaments"><span class="ico">🏆</span>Play</button>
+  <button class="nav-btn" onclick="switchTab('wallet')" id="nb-wallet"><span class="ico">💰</span>Wallet</button>
+  <button class="nav-btn" onclick="switchTab('leaderboard')" id="nb-leaderboard"><span class="ico">📊</span>Ranks</button>
+  <button class="nav-btn" onclick="switchTab('profile')" id="nb-profile"><span class="ico">👤</span>Profile</button>
+</nav>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+const FB={apiKey:"AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",authDomain:"arexabattle-75a47.firebaseapp.com",databaseURL:"https://arexabattle-75a47-default-rtdb.firebaseio.com",projectId:"arexabattle-75a47",storageBucket:"arexabattle-75a47.firebasestorage.app",messagingSenderId:"1028204149228",appId:"1:1028204149228:web:594d12f5e50c3c1bcc68c9"};
+let db=null,cloudReady=false,busy=false,netErr='';
+function loadScript(src){return new Promise(res=>{let t=document.createElement('script');t.src=src;t.onload=()=>res(true);t.onerror=()=>res(false);document.head.appendChild(t)})}
+async function ensureFirebase(){
+  try{
+    if(typeof firebase==='undefined'||!firebase.database){
+      const SRC=[['https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js'],['https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js','https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js']];
+      for(const pair of SRC){if(typeof firebase!=='undefined'&&firebase.database)break;if(await loadScript(pair[0]))await loadScript(pair[1])}
+    }
+    if(typeof firebase==='undefined'||!firebase.database)return false;
+    if(!firebase.apps.length)firebase.initializeApp(FB);
+    db=firebase.database();return true;
+  }catch(e){netErr=e&&e.message?e.message:String(e);return false}
+}
+const CLOUD='arexaBattle/sharedData',STORE='arexa_battle_data',SKEY='arexa_player_session';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.display='none',2500)}
+async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function arr(x){return Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[])}
+function normalize(d){d=d||{};let o=Object.assign({},d);o.admin=d.admin||{username:'AREXAADMIN',passHash:''};['players','tournaments','withdrawals','depositRequests','coinRequests','transactions'].forEach(k=>{o[k]=arr(d[k]).filter(x=>x&&typeof x==='object')});o.paymentSettings=d.paymentSettings||{};o.tournaments.forEach(t=>{t.players=arr(t.players)});return o}
+let data=normalize(null);
+try{let cc=JSON.parse(localStorage.getItem(STORE)||'null');if(cc)data=normalize(cc)}catch(e){}
+function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch(e){return null}}
+function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
+function logout(){localStorage.removeItem(SKEY);location.reload()}
+function me(){let s=session();if(!s)return null;return data.players.find(x=>x.username===s.username)||null}
+function saveLocal(){try{localStorage.setItem(STORE,JSON.stringify(data))}catch(e){}}
+function isBlocked(p){return!!p&&(p.banned||p.blocked||['Banned','Blocked','banned','blocked'].includes(p.status))}
+function mutate(fn){
+  return new Promise(resolve=>{
+    if(!cloudReady||!db){resolve({err:'No internet. Please try again.'});return}
+    if(busy){resolve({err:'Please wait...'});return}
+    busy=true;let out=null,done=false;
+    let finish=r=>{if(done)return;done=true;busy=false;resolve(r)};
+    let timer=setTimeout(()=>finish({err:'Slow connection. Check your wallet before retrying.'}),12000);
+    db.ref(CLOUD).transaction(cur=>{
+      out=null;let d=normalize(cur||JSON.parse(JSON.stringify(data)));
+      let r;try{r=fn(d)||{}}catch(e){out={err:'Something went wrong'};return}
+      if(r.err){out=r;return}out=r;return d;
+    },(err,committed,snap)=>{
+      clearTimeout(timer);
+      if(err){finish({err:'Save failed. Try again.'});return}
+      if(!committed){finish(out&&out.err?out:{err:'Please try again'});return}
+      data=normalize(snap.val());saveLocal();finish(out||{ok:true});
+    },false);
+  });
+}
+const REF_BONUS=5;
+const UPI_RE=/^[\w.\-]{2,}@[a-zA-Z]{2,}$/;
+const AVATARS=['🎮','🐺','🦁','🐯','🔥','⚡','👑','💀','🦅','🐉','🥷','🤖'];
+
+let tab='home',authMode='login',editProf=false,pickAv='',pendingRender=false,presenceFor='',selTour=null;
+
+function typing(){let a=document.activeElement;return!!a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')}
+function softRender(){if(typing()||editProf){pendingRender=true}else render()}
+document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{if(!typing()&&!editProf){pendingRender=false;render()}},250)});
+
+function switchTab(t){tab=t;render()}
+
+function upda

@@ -17,8 +17,6 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Arial,sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden}
 .wrap{max-width:430px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:76px;position:relative}
-
-/* TOP BAR */
 .top{position:sticky;top:0;z-index:20;background:rgba(4,5,15,0.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border2);padding:0 16px}
 .top-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
 .brand{display:flex;align-items:center;gap:10px}
@@ -30,18 +28,12 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .coin-pill{background:linear-gradient(135deg,#1a1430,#0d1128);border:1px solid var(--border2);border-radius:20px;padding:6px 12px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:var(--gold2)}
 .coin-pill .coin-icon{font-size:14px}
 .avatar-btn{width:34px;height:34px;border-radius:50%;background:var(--purple-grad);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;box-shadow:var(--glow-gold)}
-
-/* NAV */
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);background:rgba(4,5,15,0.97);backdrop-filter:blur(20px);border-top:1px solid var(--border2);display:grid;grid-template-columns:repeat(5,1fr);padding:8px 4px;z-index:20;padding-bottom:max(8px,env(safe-area-inset-bottom))}
 .nav-btn{border:0;background:none;color:var(--muted);font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:600;padding:4px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s;letter-spacing:.5px;text-transform:uppercase}
 .nav-btn .ico{font-size:20px;line-height:1}
 .nav-btn.active{color:var(--gold2)}
 .nav-btn.active .ico{filter:drop-shadow(0 0 6px #f0c04099)}
-
-/* SECTION */
 #app{padding:0}
-
-/* HERO */
 .hero-section{background:var(--hero-grad);padding:20px 16px 24px;position:relative;overflow:hidden;border-bottom:1px solid var(--border2)}
 .hero-section::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,#7c3aed22,transparent 70%);border-radius:50%;pointer-events:none}
 .hero-section::after{content:'';position:absolute;bottom:-30px;left:-30px;width:160px;height:160px;background:radial-gradient(circle,#f0c04015,transparent 70%);border-radius:50%;pointer-events:none}
@@ -54,24 +46,18 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .stat-val{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--gold2);line-height:1}
 .stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.5px}
 .hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* BUTTONS */
 .btn-primary{border:0;border-radius:12px;padding:13px 16px;background:var(--gold-grad);color:#1a0a00;font-size:14px;font-weight:900;cursor:pointer;width:100%;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;box-shadow:var(--glow-gold);transition:opacity .2s}
 .btn-primary:active{opacity:.85}
 .btn-secondary{border:1px solid var(--border2);border-radius:12px;padding:13px 16px;background:rgba(124,58,237,.12);color:var(--purple3);font-size:14px;font-weight:700;cursor:pointer;width:100%;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;transition:border-color .2s}
 .btn-secondary:active{border-color:var(--purple2)}
 .btn-outline{border:1px solid var(--border2);border-radius:10px;padding:10px 14px;background:transparent;color:var(--muted2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Rajdhani',sans-serif;transition:border-color .2s;width:100%;margin-top:6px}
 .btn-outline:active{border-color:var(--gold)}
-
-/* CARDS */
 .section{padding:16px}
 .section-title{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
 .card-gold{border-color:#f0c04030;background:linear-gradient(145deg,#1a1020,#0d0820)}
 .card-gold::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--gold-grad);opacity:.5}
-
-/* TOURNAMENT CARD */
 .tour-card{background:var(--card);border:1px solid var(--border);border-radius:18px;margin-bottom:14px;overflow:hidden;position:relative}
 .tour-header{padding:14px 16px 10px;background:linear-gradient(135deg,#1a0a3d,#0d1128)}
 .tour-header::after{content:'';position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,#7c3aed20,transparent);border-radius:50%}
@@ -89,8 +75,6 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .status-done{background:rgba(107,114,128,.12);border:1px solid #6b728044;color:#9ca3af}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
-
-/* LEADERBOARD */
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
 .lb-row:last-child{border:0}
 .lb-rank{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;width:28px;text-align:center;color:var(--muted)}
@@ -102,15 +86,11 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .lb-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lb-sub{font-size:11px;color:var(--muted)}
 .lb-coins{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--gold2)}
-
-/* WALLET */
 .wallet-bal{text-align:center;padding:20px;background:linear-gradient(135deg,#1a0a3d,#0d0820);border-radius:18px;border:1px solid #f0c04025;position:relative;overflow:hidden;margin-bottom:14px}
 .wallet-bal::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,#f0c04020,transparent);border-radius:50%}
 .bal-label{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
 .bal-amount{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--gold2);text-shadow:0 0 30px #f0c04055;line-height:1}
 .bal-sub{font-size:11px;color:var(--muted2);margin-top:6px}
-
-/* FORM */
 .field{margin:12px 0}
 .field label{display:block;font-size:12px;color:var(--muted2);letter-spacing:.5px;margin-bottom:7px;font-weight:600}
 .field input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--border2);background:rgba(13,17,40,.8);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;outline:none;transition:border-color .2s}
@@ -119,15 +99,9 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .auth-tab{border:0;border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:'Rajdhani',sans-serif;transition:all .2s}
 .auth-tab.active{background:var(--gold-grad);color:#1a0a00}
 .auth-tab:not(.active){background:none;color:var(--muted2)}
-
-/* TOAST */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1430;border:1px solid var(--purple2);border-radius:14px;padding:12px 18px;display:none;z-index:30;font-size:13px;font-weight:600;text-align:center;max-width:88%;box-shadow:0 4px 24px #7c3aed44;color:var(--text)}
-
-/* NOTICE */
 .notice{background:rgba(240,192,64,.06);border:1px solid #f0c04030;border-radius:14px;padding:14px;font-size:13px;color:#f0c090;line-height:1.5;margin:12px 0}
 .notice b{color:var(--gold2)}
-
-/* PROFILE */
 .profile-banner{background:var(--hero-grad);border-radius:18px;padding:20px 16px;text-align:center;border:1px solid var(--border2);margin-bottom:12px;position:relative;overflow:hidden}
 .profile-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-grad)}
 .p-avatar{font-size:52px;margin-bottom:8px;line-height:1}
@@ -141,118 +115,28 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',Aria
 .info-row:last-child{border:0}
 .info-label{font-size:12px;color:var(--muted);flex-shrink:0}
 .info-val{font-size:13px;font-weight:700;text-align:right;word-break:break-all}
-
-/* REFER */
 .refer-box{background:linear-gradient(135deg,#1a0a3d,#0d0820);border:1.5px dashed #f0c04055;border-radius:14px;padding:14px 16px;margin:10px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .refer-id{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:var(--gold2);word-break:break-all}
-
-/* SLOT GRID */
 .slot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .slot-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .2s;position:relative;overflow:hidden}
 .slot-card:active{border-color:var(--gold)}
 .slot-cat{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase}
 .slot-mode{font-weight:800;font-size:13px;line-height:1.3;margin-bottom:8px}
 .slot-fee{font-size:11px;color:var(--gold2);font-weight:700}
-
-/* ROOM MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:40;display:flex;align-items:flex-end;justify-content:center;padding:16px}
 .modal{background:var(--bg3);border:1px solid var(--border2);border-radius:24px 24px 18px 18px;width:100%;max-width:430px;padding:20px;max-height:85vh;overflow-y:auto}
 .modal-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;margin-bottom:16px;text-align:center}
 .room-box{background:rgba(240,192,64,.07);border:1px solid #f0c04040;border-radius:14px;padding:16px;margin:10px 0;text-align:center}
 .room-label{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
 .room-val{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--gold2);letter-spacing:2px}
-
-/* SCROLL */
+#splash{position:fixed;inset:0;z-index:100;background:#04050f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
+#splash.hide{opacity:0;pointer-events:none}
+#splash img{width:190px;height:190px;border-radius:50%;box-shadow:0 0 40px #ef444488;animation:sp 1.6s ease-in-out infinite}
+@keyframes sp{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.sp-bar{width:160px;height:4px;background:#1e1a35;border-radius:2px;margin-top:28px;overflow:hidden}
+.sp-bar i{display:block;height:100%;width:40%;background:linear-gradient(90deg,#f0c040,#ffdc45);border-radius:2px;animation:spb 1.1s linear infinite}
+@keyframes spb{0%{margin-left:-40%}100%{margin-left:100%}}
+.sp-txt{font-size:11px;color:#8b80a8;letter-spacing:3px;margin-top:12px}
 ::-webkit-scrollbar{width:0}
 </style></head><body>
-<div class="wrap">
-<header class="top">
-  <div class="top-inner">
-    <div class="brand">
-      <div class="brand-logo">⚔️</div>
-      <div>
-        <div class="brand-text">AREXA <span>BATTLE</span></div>
-        <div class="brand-sub">PLAYER ARENA</div>
-      </div>
-    </div>
-    <div class="top-right">
-      <div class="coin-pill" id="topCoins"><span class="coin-icon">🪙</span><span id="topCoinVal">—</span></div>
-      <div class="avatar-btn" id="topAvatar" onclick="switchTab('profile')">🎮</div>
-    </div>
-  </div>
-</header>
-<div id="app"><p style="color:var(--muted);padding:30px;text-align:center">Loading...</p></div>
-<div id="toast" class="toast"></div>
-</div>
-<nav class="nav" id="nav" style="display:none">
-  <button class="nav-btn active" onclick="switchTab('home')" id="nb-home"><span class="ico">🏠</span>Home</button>
-  <button class="nav-btn" onclick="switchTab('tournaments')" id="nb-tournaments"><span class="ico">🏆</span>Play</button>
-  <button class="nav-btn" onclick="switchTab('wallet')" id="nb-wallet"><span class="ico">💰</span>Wallet</button>
-  <button class="nav-btn" onclick="switchTab('leaderboard')" id="nb-leaderboard"><span class="ico">📊</span>Ranks</button>
-  <button class="nav-btn" onclick="switchTab('profile')" id="nb-profile"><span class="ico">👤</span>Profile</button>
-</nav>
-
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script>
-const FB={apiKey:"AIzaSyDGauX_zs7rsEe2ti2QFgo7z5slg9BL-ck",authDomain:"arexabattle-75a47.firebaseapp.com",databaseURL:"https://arexabattle-75a47-default-rtdb.firebaseio.com",projectId:"arexabattle-75a47",storageBucket:"arexabattle-75a47.firebasestorage.app",messagingSenderId:"1028204149228",appId:"1:1028204149228:web:594d12f5e50c3c1bcc68c9"};
-let db=null,cloudReady=false,busy=false,netErr='';
-function loadScript(src){return new Promise(res=>{let t=document.createElement('script');t.src=src;t.onload=()=>res(true);t.onerror=()=>res(false);document.head.appendChild(t)})}
-async function ensureFirebase(){
-  try{
-    if(typeof firebase==='undefined'||!firebase.database){
-      const SRC=[['https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js'],['https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js','https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js']];
-      for(const pair of SRC){if(typeof firebase!=='undefined'&&firebase.database)break;if(await loadScript(pair[0]))await loadScript(pair[1])}
-    }
-    if(typeof firebase==='undefined'||!firebase.database)return false;
-    if(!firebase.apps.length)firebase.initializeApp(FB);
-    db=firebase.database();return true;
-  }catch(e){netErr=e&&e.message?e.message:String(e);return false}
-}
-const CLOUD='arexaBattle/sharedData',STORE='arexa_battle_data',SKEY='arexa_player_session';
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(s){let t=$('toast');if(!t)return;t.textContent=s;t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.display='none',2500)}
-async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function arr(x){return Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[])}
-function normalize(d){d=d||{};let o=Object.assign({},d);o.admin=d.admin||{username:'AREXAADMIN',passHash:''};['players','tournaments','withdrawals','depositRequests','coinRequests','transactions'].forEach(k=>{o[k]=arr(d[k]).filter(x=>x&&typeof x==='object')});o.paymentSettings=d.paymentSettings||{};o.tournaments.forEach(t=>{t.players=arr(t.players)});return o}
-let data=normalize(null);
-try{let cc=JSON.parse(localStorage.getItem(STORE)||'null');if(cc)data=normalize(cc)}catch(e){}
-function session(){try{return JSON.parse(localStorage.getItem(SKEY)||'null')}catch(e){return null}}
-function setSession(v){localStorage.setItem(SKEY,JSON.stringify(v))}
-function logout(){localStorage.removeItem(SKEY);location.reload()}
-function me(){let s=session();if(!s)return null;return data.players.find(x=>x.username===s.username)||null}
-function saveLocal(){try{localStorage.setItem(STORE,JSON.stringify(data))}catch(e){}}
-function isBlocked(p){return!!p&&(p.banned||p.blocked||['Banned','Blocked','banned','blocked'].includes(p.status))}
-function mutate(fn){
-  return new Promise(resolve=>{
-    if(!cloudReady||!db){resolve({err:'No internet. Please try again.'});return}
-    if(busy){resolve({err:'Please wait...'});return}
-    busy=true;let out=null,done=false;
-    let finish=r=>{if(done)return;done=true;busy=false;resolve(r)};
-    let timer=setTimeout(()=>finish({err:'Slow connection. Check your wallet before retrying.'}),12000);
-    db.ref(CLOUD).transaction(cur=>{
-      out=null;let d=normalize(cur||JSON.parse(JSON.stringify(data)));
-      let r;try{r=fn(d)||{}}catch(e){out={err:'Something went wrong'};return}
-      if(r.err){out=r;return}out=r;return d;
-    },(err,committed,snap)=>{
-      clearTimeout(timer);
-      if(err){finish({err:'Save failed. Try again.'});return}
-      if(!committed){finish(out&&out.err?out:{err:'Please try again'});return}
-      data=normalize(snap.val());saveLocal();finish(out||{ok:true});
-    },false);
-  });
-}
-const REF_BONUS=5;
-const UPI_RE=/^[\w.\-]{2,}@[a-zA-Z]{2,}$/;
-const AVATARS=['🎮','🐺','🦁','🐯','🔥','⚡','👑','💀','🦅','🐉','🥷','🤖'];
-
-let tab='home',authMode='login',editProf=false,pickAv='',pendingRender=false,presenceFor='',selTour=null;
-
-function typing(){let a=document.activeElement;return!!a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')}
-function softRender(){if(typing()||editProf){pendingRender=true}else render()}
-document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{if(!typing()&&!editProf){pendingRender=false;render()}},250)});
-
-function switchTab(t){tab=t;render()}
-
-function upda
+<div id="splash"><img src="data:image/jpeg;base64,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

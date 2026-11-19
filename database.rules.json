@@ -3,6 +3,14 @@
     ".read": false,
     ".write": false,
     "arexaBattle": {
+      "sharedData": {
+        ".read": true,
+        ".write": true
+      },
+      "presence": {
+        ".read": true,
+        ".write": true
+      },
       "public": {
         ".read": "auth != null",
         ".write": "auth != null && auth.token.admin === true"
